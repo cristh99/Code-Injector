@@ -1,0 +1,29 @@
+{
+  "artifact": "LLAVE",
+  "branch": "llave-refined-capability-v1",
+  "format": "llave-publication-manifest-v1",
+  "github_merge_authorized": false,
+  "package": {
+    "container": "llave/release/LLAVE-v1.0.0-release-kit.tar.gz",
+    "path": "LLAVE-v1-release-kit/packages/evidencia-publica-llave-1.0.0.tgz",
+    "sha256": "46e90d811836af758fc977f721c9f147ecdc342547730f8591c6b3965fe98668",
+    "size_bytes": 29142
+  },
+  "production_migration_applied": false,
+  "release_kit": {
+    "path": "llave/release/LLAVE-v1.0.0-release-kit.tar.gz",
+    "sha256": "c2c1667cfc3abcc44d1fbe52adbca2c36c69ca09a56e4a91d8f6200abc674d1e",
+    "size_bytes": 74410
+  },
+  "source_snapshot_commit": "6f885d03ee0012f91411b06a6870e65ea5a04010",
+  "stack_base": "FORJA v1.0.0",
+  "verification": {
+    "clean_install": true,
+    "contract_hash_parity": true,
+    "github_actions_required": true,
+    "inventory_entries": 32,
+    "node_tests": "28/28 PASS",
+    "temporary_neon_canary": "PASS"
+  },
+  "version": "1.0.0"
+}

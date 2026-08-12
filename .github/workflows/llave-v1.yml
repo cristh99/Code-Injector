@@ -1,0 +1,47 @@
+name: LLAVE v1 independent reconstruction
+
+on:
+  push:
+    branches: [llave-refined-capability-v1]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reconstruct exact release kit
+        run: |
+          bash llave/release/reconstruct.sh /tmp/LLAVE-v1.0.0-release-kit.tar.gz
+          echo 'c2c1667cfc3abcc44d1fbe52adbca2c36c69ca09a56e4a91d8f6200abc674d1e  /tmp/LLAVE-v1.0.0-release-kit.tar.gz' | sha256sum -c -
+          mkdir -p /tmp/llave-kit
+          tar -xzf /tmp/LLAVE-v1.0.0-release-kit.tar.gz -C /tmp/llave-kit
+          cd /tmp/llave-kit/LLAVE-v1-release-kit
+          sha256sum -c SHA256SUMS
+          node VERIFY-RELEASE.mjs
+      - name: Run reconstructed source tests
+        run: npm test --prefix /tmp/llave-kit/LLAVE-v1-release-kit/source/llave
+      - name: Build reconstructed package twice
+        run: |
+          mkdir -p /tmp/llave-pack-a /tmp/llave-pack-b
+          (cd /tmp/llave-kit/LLAVE-v1-release-kit/source/llave && npm pack --pack-destination /tmp/llave-pack-a)
+          (cd /tmp/llave-kit/LLAVE-v1-release-kit/source/llave && npm pack --pack-destination /tmp/llave-pack-b)
+          cmp /tmp/llave-pack-a/evidencia-publica-llave-1.0.0.tgz /tmp/llave-pack-b/evidencia-publica-llave-1.0.0.tgz
+          echo '46e90d811836af758fc977f721c9f147ecdc342547730f8591c6b3965fe98668  /tmp/llave-pack-a/evidencia-publica-llave-1.0.0.tgz' | sha256sum -c -
+      - name: Cold offline install and authorization proof
+        run: |
+          npm install --ignore-scripts --offline --prefix /tmp/llave-install /tmp/llave-pack-a/evidencia-publica-llave-1.0.0.tgz
+          printf '%s' '{"capability_code":"MotherDuck:Write","resources":["my_db.institutional_cache.choloma_entity_93_*","my_db.institutional_cache.choloma_entity_93_*"],"operations":["readback","CREATE_VIEW","CREATE_TABLE_AS","TRANSACTION"],"modes":["versioned_non_current_fail_closed"],"limits":{"query_rw_max":0,"max_mutations":4,"max_calls":1,"external_spend_usd_max":0},"constraints":{"single_writer":true,"current_promotion_authorized":false}}' | node /tmp/llave-install/node_modules/@evidencia-publica/llave/src/cli.mjs contract-hash | tee /tmp/contract.json
+          grep -F '72d065cb9bab85897dbc6f19396da1039b30c639cdda4b70277293f86d28c63c' /tmp/contract.json
+          set +e
+          printf '%s' '{"grant":{"capability_code":"motherduck:write","resources":["my_db.institutional_cache.oncae_hc1_2005_*"],"operations":["CREATE_TABLE_AS","CREATE_VIEW","READBACK","TRANSACTION"],"modes":["VERSIONED_NON_CURRENT_FAIL_CLOSED"],"limits":{"max_calls":1,"max_mutations":5,"external_spend_usd_max":0,"query_rw_max":0},"constraints":{"current_promotion_authorized":false,"single_writer":true}},"requirement":{"capability_code":"motherduck:write","resources":["my_db.institutional_cache.choloma_entity_93_*"],"operations":["CREATE_TABLE_AS","CREATE_VIEW","READBACK","TRANSACTION"],"modes":["VERSIONED_NON_CURRENT_FAIL_CLOSED"],"limits":{"max_calls":1,"max_mutations":4,"external_spend_usd_max":0,"query_rw_max":0},"constraints":{"current_promotion_authorized":false,"single_writer":true}}}' | node /tmp/llave-install/node_modules/@evidencia-publica/llave/src/cli.mjs authorize-check | tee /tmp/denial.json
+          rc=${PIPESTATUS[1]}
+          set -e
+          test "$rc" -eq 2
+          grep -F 'RESOURCE_NOT_COVERED' /tmp/denial.json
