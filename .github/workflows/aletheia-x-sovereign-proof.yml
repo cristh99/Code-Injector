@@ -1,0 +1,69 @@
+name: ALETHEIA X Sovereign Proof
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [aletheia-x]
+    paths:
+      - 'releases/ALETHEIA-X-v0.3.0-sovereign-proof.mjs.gz.b64'
+      - '.github/workflows/aletheia-x-sovereign-proof.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  sovereign-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Reconstruct content-addressed ALETHEIA executable
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/aletheia-x-sovereign"
+          mkdir -p "$root"
+          base64 --decode releases/ALETHEIA-X-v0.3.0-sovereign-proof.mjs.gz.b64 > "$root/aletheia-sovereign-proof.mjs.gz"
+          echo "3d88f4ea233304913819b139b5733428a462caeec02746ecb8057976043500ac  $root/aletheia-sovereign-proof.mjs.gz" | sha256sum -c -
+          gzip --decompress --stdout "$root/aletheia-sovereign-proof.mjs.gz" > "$root/aletheia-sovereign-proof.mjs"
+          echo "cdd357b13f703d51da45376ac890562b41db712aa9eee590cb4d3aa6f8fdb6e8  $root/aletheia-sovereign-proof.mjs" | sha256sum -c -
+          node --check "$root/aletheia-sovereign-proof.mjs"
+          echo "root=$root" >> "$GITHUB_OUTPUT"
+          echo "script=$root/aletheia-sovereign-proof.mjs" >> "$GITHUB_OUTPUT"
+
+      - name: Execute real sovereign web canary
+        shell: bash
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+        run: |
+          set -euo pipefail
+          root="${{ steps.source.outputs.root }}"
+          env -u FIRECRAWL_API_KEY -u TAVILY_API_KEY -u EXA_API_KEY -u PARALLEL_API_KEY -u TINYFISH_API_KEY             node "${{ steps.source.outputs.script }}" "$root/artifacts" | tee "$root/stdout.json"
+          node - "$root/artifacts/sovereign-proof-report.json" <<'NODE'
+          const fs = require('node:fs');
+          const report = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          const expected = [
+            'zero_paid_credentials', 'zero_external_provider_calls', 'native_http_operational',
+            'direct_cdp_operational', 'sielho_exact_identifiers', 'portal_exact_record', 'portal_file_locator',
+          ];
+          if (!report.success || expected.some((key) => report.gates[key] !== true)) process.exit(1);
+          if (report.external_provider_calls.length !== 0) process.exit(1);
+          if (report.provider_names.some((name) => !name.startsWith('sovereign-'))) process.exit(1);
+          console.log(JSON.stringify({ success: report.success, gates: report.gates, providers: report.provider_names, report_sha256: report.report_sha256 }, null, 2));
+          NODE
+
+      - name: Upload sovereign evidence and exact executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: aletheia-x-sovereign-proof-${{ github.run_id }}
+          path: |
+            ${{ steps.source.outputs.root }}/aletheia-sovereign-proof.mjs
+            ${{ steps.source.outputs.root }}/aletheia-sovereign-proof.mjs.gz
+            ${{ steps.source.outputs.root }}/artifacts/**
+            ${{ steps.source.outputs.root }}/stdout.json
+          retention-days: 30

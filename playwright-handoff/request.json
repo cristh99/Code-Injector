@@ -1,7 +1,0 @@
-{
-  "run_id": "sielho-85111-human-handoff-v1-20260812",
-  "url": "https://sielho.iaip.gob.hn/solicitud/85111/historial/",
-  "expected_host": "sielho.iaip.gob.hn",
-  "timeout_ms": 420000,
-  "settle_ms": 3000
-}
