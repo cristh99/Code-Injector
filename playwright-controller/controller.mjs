@@ -1,16 +1,21 @@
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
+import { request as httpsRequest } from 'node:https';
+import { isIP } from 'node:net';
 import { fileURLToPath } from 'node:url';
 
 const ARTIFACT_ROOT = path.resolve(process.cwd(), 'playwright-controller', 'artifacts');
+const IAIP_DOWNLOAD_HOSTS = new Set(['api.iaip.gob.hn', 'portalunico.iaip.gob.hn']);
 const ALLOWED_ACTIONS = new Set([
   'goto', 'reload', 'click', 'fill', 'type', 'press', 'select',
   'check', 'uncheck', 'wait_for', 'wait_ms', 'assert_text',
-  'assert_url', 'screenshot',
+  'assert_url', 'screenshot', 'download',
 ]);
 const ALLOWED_EXTRACTS = new Set(['title', 'url', 'text', 'count', 'attribute', 'html', 'visible']);
 const LOCATOR_KEYS = ['selector', 'role', 'label', 'placeholder', 'text', 'testid', 'alt', 'title'];
+const DOWNLOAD_FORMATS = new Set(['PDF']);
 
 function fail(message) {
   throw new Error(message);
@@ -72,6 +77,51 @@ export function safeArtifactPath(relativePath) {
   return resolved;
 }
 
+function normalizeDownloadAction(action, field) {
+  const normalizedUrl = validateHttpUrl(action.url, `${field}.url`);
+  const parsed = new URL(normalizedUrl);
+  if (parsed.protocol !== 'https:') {
+    fail(`${field}.url must use https`);
+  }
+  const pinned = action.pinned_ip;
+  if (pinned !== undefined) {
+    requireString(pinned, `${field}.pinned_ip`);
+    if (isIP(pinned) === 0) {
+      fail(`${field}.pinned_ip must be a valid IP address`);
+    }
+    if (!IAIP_DOWNLOAD_HOSTS.has(parsed.hostname)) {
+      fail('Pinned downloads are restricted to official IAIP hosts');
+    }
+  } else if (!IAIP_DOWNLOAD_HOSTS.has(parsed.hostname)) {
+    fail('Downloads are restricted to official IAIP hosts');
+  }
+
+  requireString(action.path, `${field}.path`);
+  safeArtifactPath(action.path);
+
+  const expectedFormat = String(action.expected_format ?? 'PDF').toUpperCase();
+  if (!DOWNLOAD_FORMATS.has(expectedFormat)) {
+    fail(`${field}.expected_format must be one of ${[...DOWNLOAD_FORMATS].join(', ')}`);
+  }
+  const maxBytes = action.max_bytes ?? 160 * 1024 * 1024;
+  if (!Number.isInteger(maxBytes) || maxBytes < 1 || maxBytes > 200 * 1024 * 1024) {
+    fail(`${field}.max_bytes must be an integer between 1 and 209715200`);
+  }
+  if (action.expected_sha256 !== undefined) {
+    requireString(action.expected_sha256, `${field}.expected_sha256`);
+    if (!/^[a-fA-F0-9]{64}$/.test(action.expected_sha256)) {
+      fail(`${field}.expected_sha256 must be a 64-character hexadecimal digest`);
+    }
+  }
+
+  action.url = normalizedUrl;
+  action.expected_format = expectedFormat;
+  action.max_bytes = maxBytes;
+  if (action.expected_sha256 !== undefined) {
+    action.expected_sha256 = action.expected_sha256.toLowerCase();
+  }
+}
+
 export function validateRequest(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     fail('request must be an object');
@@ -118,6 +168,7 @@ export function validateRequest(input) {
       validateLocator(action.locator, `${field}.locator`);
     }
     if (action.type === 'goto') validateHttpUrl(action.url, `${field}.url`);
+    if (action.type === 'download') normalizeDownloadAction(action, field);
     if (['fill', 'type'].includes(action.type)) requireString(action.value, `${field}.value`, { allowEmpty: true });
     if (action.type === 'press') requireString(action.key, `${field}.key`);
     if (action.type === 'select' && typeof action.value !== 'string' && !Array.isArray(action.value)) {
@@ -159,6 +210,128 @@ function locatorFor(page, spec) {
   if (spec.alt !== undefined) return page.getByAltText(spec.alt, { exact: spec.exact });
   if (spec.title !== undefined) return page.getByTitle(spec.title, { exact: spec.exact });
   fail('Unknown locator strategy');
+}
+
+function readHttpsResponse(url, action, timeout, redirectDepth = 0) {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url);
+    const options = {
+      protocol: 'https:',
+      hostname: parsed.hostname,
+      port: parsed.port || 443,
+      method: 'GET',
+      path: `${parsed.pathname}${parsed.search}`,
+      servername: parsed.hostname,
+      headers: {
+        Host: parsed.host,
+        Accept: 'application/pdf,application/octet-stream,*/*',
+        'Accept-Encoding': 'identity',
+        Referer: `https://${parsed.hostname}/`,
+        'User-Agent': 'EAAT-VigiLaSula-PublicEvidenceHarvester/1.0',
+        Connection: 'close',
+      },
+    };
+    if (action.pinned_ip) {
+      options.lookup = (_hostname, _lookupOptions, callback) => {
+        callback(null, action.pinned_ip, isIP(action.pinned_ip));
+      };
+    }
+
+    const req = httpsRequest(options, (response) => {
+      const status = response.statusCode ?? 0;
+      const location = response.headers.location;
+      if ([301, 302, 303, 307, 308].includes(status) && location) {
+        response.resume();
+        if (redirectDepth >= 3) {
+          reject(new Error('Download exceeded the redirect limit'));
+          return;
+        }
+        const redirected = new URL(location, parsed);
+        if (!IAIP_DOWNLOAD_HOSTS.has(redirected.hostname)) {
+          reject(new Error(`Refused download redirect outside IAIP: ${redirected.hostname}`));
+          return;
+        }
+        readHttpsResponse(redirected.toString(), action, timeout, redirectDepth + 1).then(resolve, reject);
+        return;
+      }
+      resolve({ response, finalUrl: parsed.toString() });
+    });
+    req.setTimeout(timeout, () => req.destroy(new Error(`Download timed out after ${timeout} ms`)));
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+function validateDownloadedBuffer(buffer, expectedFormat) {
+  const head = buffer.subarray(0, Math.min(buffer.length, 8192));
+  const low = head.toString('utf8').trimStart().slice(0, 512).toLowerCase();
+  if (low.startsWith('<!doctype html') || low.startsWith('<html') || low.includes('<html')) {
+    fail('Download returned HTML instead of a source document');
+  }
+  if (expectedFormat === 'PDF') {
+    if (!buffer.subarray(0, 5).equals(Buffer.from('%PDF-'))) {
+      fail('Expected PDF magic was not present');
+    }
+    const tail = buffer.subarray(Math.max(0, buffer.length - 65_536));
+    if (!tail.includes(Buffer.from('%%EOF'))) {
+      fail('PDF EOF marker was not present');
+    }
+  }
+}
+
+async function downloadToArtifact(action, timeout) {
+  const output = safeArtifactPath(action.path);
+  await fsp.mkdir(path.dirname(output), { recursive: true });
+
+  const { response, finalUrl } = await readHttpsResponse(action.url, action, timeout);
+  const status = response.statusCode ?? 0;
+  if (status !== 200) {
+    const previewChunks = [];
+    let previewBytes = 0;
+    for await (const chunk of response) {
+      const value = Buffer.from(chunk);
+      previewChunks.push(value);
+      previewBytes += value.length;
+      if (previewBytes >= 4096) break;
+    }
+    const preview = Buffer.concat(previewChunks).subarray(0, 4096).toString('utf8');
+    fail(`Download failed HTTP ${status}: ${preview.slice(0, 500)}`);
+  }
+
+  const chunks = [];
+  let bytes = 0;
+  for await (const chunk of response) {
+    const value = Buffer.from(chunk);
+    bytes += value.length;
+    if (bytes > action.max_bytes) {
+      response.destroy();
+      fail(`Download exceeded max_bytes ${action.max_bytes}`);
+    }
+    chunks.push(value);
+  }
+  const buffer = Buffer.concat(chunks, bytes);
+  if (buffer.length === 0) {
+    fail('Download returned an empty body');
+  }
+  validateDownloadedBuffer(buffer, action.expected_format);
+
+  const sha256 = createHash('sha256').update(buffer).digest('hex');
+  if (action.expected_sha256 && sha256 !== action.expected_sha256) {
+    fail(`Download SHA-256 mismatch: expected ${action.expected_sha256}, got ${sha256}`);
+  }
+  await fsp.writeFile(output, buffer);
+
+  return {
+    source_url: action.url,
+    final_url: finalUrl,
+    artifact_path: action.path,
+    http_status: status,
+    content_type: response.headers['content-type'] ?? null,
+    bytes,
+    sha256,
+    detected_format: action.expected_format,
+    outcome: 'PRESERVED_USABLE',
+  };
 }
 
 async function runAction(page, action, timeout) {
@@ -219,9 +392,12 @@ async function runAction(page, action, timeout) {
       await page.screenshot({ path: output, fullPage: action.full_page ?? true });
       break;
     }
+    case 'download':
+      return downloadToArtifact(action, timeout);
     default:
       fail(`Unsupported action: ${action.type}`);
   }
+  return null;
 }
 
 async function extractValue(page, item, timeout) {
@@ -297,8 +473,14 @@ export async function main(requestPath = process.env.PW_REQUEST ?? 'playwright-c
     for (let index = 0; index < request.actions.length; index += 1) {
       const action = request.actions[index];
       const start = Date.now();
-      await runAction(page, action, request.timeout_ms);
-      actionLog.push({ index, type: action.type, success: true, duration_ms: Date.now() - start });
+      const actionResult = await runAction(page, action, request.timeout_ms);
+      actionLog.push({
+        index,
+        type: action.type,
+        success: true,
+        duration_ms: Date.now() - start,
+        ...(actionResult ?? {}),
+      });
     }
 
     const output = {};
