@@ -5,7 +5,7 @@ on:
   push:
     branches: [aletheia-x]
     paths:
-      - 'releases/ALETHEIA-X-v0.3.1-sovereign-proof.mjs.gz'
+      - 'releases/chunks/ALETHEIA-X-v0.3.1-sovereign-proof.mjs.gz.b64.part-*'
       - '.github/workflows/aletheia-x-sovereign-proof.yml'
 
 permissions:
@@ -38,7 +38,12 @@ jobs:
           set -euo pipefail
           root="$RUNNER_TEMP/aletheia-x-sovereign"
           mkdir -p "$root"
-          cp releases/ALETHEIA-X-v0.3.1-sovereign-proof.mjs.gz "$root/aletheia-sovereign-proof.mjs.gz"
+          shopt -s nullglob
+          parts=(releases/chunks/ALETHEIA-X-v0.3.1-sovereign-proof.mjs.gz.b64.part-*)
+          (( ${#parts[@]} == 12 )) || { echo "expected 12 chunks, found ${#parts[@]}" >&2; exit 1; }
+          cat "${parts[@]}" > "$root/aletheia-sovereign-proof.mjs.gz.b64"
+          echo "13feb25a0584a88f60e45c52b03ef685536004ee09507ad980a2f149cb2654ef  $root/aletheia-sovereign-proof.mjs.gz.b64" | sha256sum -c -
+          base64 --decode "$root/aletheia-sovereign-proof.mjs.gz.b64" > "$root/aletheia-sovereign-proof.mjs.gz"
           echo "83daa68a0444e6f132957b02cf134c013cf4c0df134f12011904682c95f73559  $root/aletheia-sovereign-proof.mjs.gz" | sha256sum -c -
           gzip --decompress --stdout "$root/aletheia-sovereign-proof.mjs.gz" > "$root/aletheia-sovereign-proof.mjs"
           echo "8bc582d8484d9d02476106a648e1d55615156ea7a3f823ff4569a252ee18b48d  $root/aletheia-sovereign-proof.mjs" | sha256sum -c -
