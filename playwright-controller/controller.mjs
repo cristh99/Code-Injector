@@ -16,6 +16,10 @@ function fail(message) {
   throw new Error(message);
 }
 
+export function browserHeadlessMode(env = process.env) {
+  return env.PW_HEADLESS !== 'false';
+}
+
 function requireString(value, field, { allowEmpty = false } = {}) {
   if (typeof value !== 'string' || (!allowEmpty && value.length === 0)) {
     fail(`${field} must be a${allowEmpty ? '' : ' non-empty'} string`);
@@ -270,6 +274,7 @@ export async function main(requestPath = process.env.PW_REQUEST ?? 'playwright-c
   let page;
   let request;
   let traceStarted = false;
+  const headless = browserHeadlessMode();
 
   try {
     request = validateRequest(JSON.parse(await fsp.readFile(requestPath, 'utf8')));
@@ -277,7 +282,7 @@ export async function main(requestPath = process.env.PW_REQUEST ?? 'playwright-c
     const executablePath = await findChromeExecutable();
     browser = await chromium.launch({
       executablePath,
-      headless: true,
+      headless,
       args: ['--no-sandbox', '--disable-dev-shm-usage'],
     });
     context = await browser.newContext({ viewport: request.viewport });
@@ -313,6 +318,7 @@ export async function main(requestPath = process.env.PW_REQUEST ?? 'playwright-c
     const result = {
       success: true,
       run_id: request.run_id,
+      browser_headless: headless,
       started_at: startedAt,
       finished_at: new Date().toISOString(),
       final_url: page.url(),
@@ -340,6 +346,7 @@ export async function main(requestPath = process.env.PW_REQUEST ?? 'playwright-c
       await writeJson('result.json', {
         success: false,
         run_id: request?.run_id ?? null,
+        browser_headless: headless,
         started_at: startedAt,
         finished_at: new Date().toISOString(),
         final_url: page?.url() ?? null,

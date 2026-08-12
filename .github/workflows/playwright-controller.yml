@@ -29,10 +29,11 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Verify system Chrome
+      - name: Verify system Chrome and virtual display
         run: |
           command -v google-chrome || command -v chromium || command -v chromium-browser
           (google-chrome --version || chromium --version || chromium-browser --version)
+          command -v xvfb-run
 
       - name: Install controller dependency
         working-directory: playwright-controller
@@ -44,7 +45,7 @@ jobs:
       - name: Execute Playwright request
         id: execute
         continue-on-error: true
-        run: node playwright-controller/controller.mjs playwright-controller/request.json
+        run: xvfb-run -a env PW_HEADLESS=false node playwright-controller/controller.mjs playwright-controller/request.json
 
       - name: Upload deterministic evidence
         if: always()
