@@ -1,0 +1,13 @@
+{
+  "name": "playwright-controller",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "dependencies": {
+    "playwright-core": "1.61.1"
+  },
+  "scripts": {
+    "test": "node --test ../test/controller.test.mjs",
+    "run": "node controller.mjs request.json"
+  }
+}
