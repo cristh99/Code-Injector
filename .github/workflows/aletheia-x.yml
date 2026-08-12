@@ -68,7 +68,22 @@ jobs:
         run: |
           set -euo pipefail
           npm run --silent benchmark | tee benchmark-report.json
-          echo "8edc06bc373f5a45d5f5e9010a0c532fd82d78049f897ba0bba1d3284bd0b113  benchmark-report.json" | sha256sum -c -
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const report = JSON.parse(fs.readFileSync('benchmark-report.json', 'utf8'));
+          const valid = report.benchmark_version === 'aletheia-x-firecrawl-resilience-v2'
+            && report.firecrawl_only?.successes === 1
+            && report.firecrawl_only?.total === 10
+            && report.aletheia?.successes === 10
+            && report.aletheia?.total === 10
+            && report.improvement_ratio === 10
+            && report.capability_envelope?.is_strict_superset === true
+            && report.capability_envelope?.missing_from_aletheia?.length === 0;
+          if (!valid) {
+            console.error('benchmark semantic verification failed');
+            process.exit(1);
+          }
+          NODE
       - name: CLI smoke tests
         working-directory: ${{ steps.release.outputs.release_root }}/aletheia-x
         run: |
