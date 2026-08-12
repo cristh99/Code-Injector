@@ -1,21 +1,21 @@
 {
-  "run_id": "sedesol-transfer-report-nov2025-probe-v1-20260812",
-  "url": "https://portalunico.iaip.gob.hn/ver_archivo/MjU0ODM0NQ==",
+  "run_id": "sedesol-transfer-report-2548345-pinned-v1-20260812",
+  "url": "https://example.com/",
   "timeout_ms": 120000,
-  "viewport": { "width": 1440, "height": 1200 },
+  "viewport": { "width": 1280, "height": 720 },
   "actions": [
-    { "type": "wait_ms", "ms": 15000 },
-    { "type": "screenshot", "path": "sedesol-transfer-nov2025.png", "full_page": true }
+    {
+      "type": "download",
+      "url": "https://portalunico.iaip.gob.hn/ver_archivo/MjU0ODM0NQ==",
+      "path": "downloads/IAIP_2548345_SEDESOL_TRANSFERENCIAS_NOVIEMBRE_2025.pdf",
+      "pinned_ip": "190.107.149.100",
+      "expected_format": "PDF",
+      "max_bytes": 104857600
+    }
   ],
   "extract": [
     { "name": "title", "type": "title" },
-    { "name": "url", "type": "url" },
-    { "name": "body_text", "type": "text", "locator": { "selector": "body" } },
-    { "name": "body_html", "type": "html", "locator": { "selector": "body" } },
-    { "name": "embed_count", "type": "count", "locator": { "selector": "embed" } },
-    { "name": "iframe_count", "type": "count", "locator": { "selector": "iframe" } },
-    { "name": "pdf_viewer_count", "type": "count", "locator": { "selector": "pdf-viewer" } },
-    { "name": "download_links", "type": "count", "locator": { "selector": "a[download], a[href*='archivo'], a[href*='.pdf']" } }
+    { "name": "url", "type": "url" }
   ],
-  "capture_final_screenshot": true
+  "capture_final_screenshot": false
 }
