@@ -1,0 +1,28 @@
+name: FORJA v1 exact live custody
+on:
+  workflow_dispatch:
+  push:
+    branches: [forja-control-plane-v1]
+    paths:
+      - 'forja/live-v1/**'
+      - '.github/workflows/forja-v1-live-custody.yml'
+permissions:
+  contents: read
+jobs:
+  reconstruct:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reconstruct and verify exact Neon-tested payload
+        run: bash forja/live-v1/reconstruct.sh
+      - name: Confirm production remains forbidden by certification
+        run: |
+          python3 - <<'PY'
+          import json
+          c=json.load(open('forja/live-v1/FORJA-LIVE-CERTIFICATION.json'))
+          assert c['verification']['production_applied'] is False
+          assert c['verification']['promotion_authorized'] is False
+          assert c['live_neon']['gates_passed']==20
+          print('FORJA_LIVE_CUSTODY_PASS')
+          PY

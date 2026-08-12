@@ -1,0 +1,51 @@
+{
+  "artifact": "FORJA",
+  "version": "1.0.0",
+  "status": "PASS_ISOLATED_LIVE_LIFECYCLE",
+  "custody": {
+    "source": "Neon cooperation-v2 integrity-verified payloads",
+    "correlation_id": "2cf1c6f5-4d99-4e3a-9f2b-a83836e41d0a",
+    "migration_message_ids": [
+      "1f6ab1ee-68fd-4079-9ed8-e960d4b78c88",
+      "895fc1f0-b79c-4f59-9ab3-8d00546ed378",
+      "6ff2f58e-5090-41ce-9c37-be81c3354e68",
+      "1bb63d59-7476-46a4-93bf-81f56ba5b5f0"
+    ],
+    "support_bundle_message_id": "d2f7428d-e21c-4ef5-b7c4-c8b1687851fc",
+    "live_result_message_id": "b267c901-b550-47ac-94a2-aae51e134d6a"
+  },
+  "artifacts": {
+    "migration": {"bytes": 69909, "sha256": "2bea73c72938db55b2fc077baa7e3d8fb7d02f8e751d248e95b312cabed14584"},
+    "canary": {"bytes": 19862, "sha256": "c03743c42654bf975aa91af2506145abda901dee5deea0f7970fc04920af7c3b"},
+    "rollback": {"bytes": 3354, "sha256": "8d103087c34cabf29e06161c8ec5934bade47e8518e20632cafbc18ae099eeac"},
+    "manifest": {"bytes": 1788, "sha256": "db29fdd21f13e0302ee6c87241a3254df403df533a212ea7c2d05b7bc13220d6"},
+    "checksums": {"bytes": 867, "sha256": "bcef23283acd264bea6267990c8bc4bc718af2495cb2d4f3d7cad769cb8f88a3"}
+  },
+  "live_neon": {
+    "project_id": "proud-union-83275604",
+    "temporary_branch_id": "br-late-block-axayxmxq",
+    "temporary_branch_name": "forja-v1-live-canary-20260812",
+    "tables": 4,
+    "functions": 21,
+    "constraints": 94,
+    "indexes": 12,
+    "canary_runs": 2,
+    "gates_passed": 20,
+    "gates_failed": 0,
+    "rollback_objects_remaining": 0,
+    "reinstall_rows": 0,
+    "schema_manifest_sha256": "aae30a46ebac5fe6eb0da53f25f434bacab68d0bc500336720789c7bf0ff7a29",
+    "cooperation_version": "2.2.0",
+    "migration_integrity": true
+  },
+  "verification": {
+    "recoverable_local_suite": "59/59 PASS",
+    "github_sdk_baseline": "38/38 PASS",
+    "production_forja_objects": 0,
+    "production_applied": false,
+    "promotion_authorized": false,
+    "external_spend_usd": 0,
+    "basic_memory": "PROHIBITED"
+  },
+  "claim_boundary": "EXACT LIVE DATABASE PAYLOAD AND ISOLATED-BRANCH EVIDENCE; NOT PRODUCTION DEPLOYMENT"
+}
