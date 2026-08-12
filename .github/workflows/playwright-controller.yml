@@ -6,7 +6,8 @@ on:
     paths:
       - '.github/workflows/playwright-controller.yml'
       - 'playwright-controller/**'
-      - 'test/controller.test.mjs'
+      - 'playwright-handoff/**'
+      - 'test/*.test.mjs'
   workflow_dispatch:
 
 permissions:
@@ -40,7 +41,7 @@ jobs:
         run: npm install --no-audit --no-fund --ignore-scripts
 
       - name: Run unit tests
-        run: node --test test/controller.test.mjs
+        run: node --test test/*.test.mjs
 
       - name: Execute Playwright request
         id: execute
