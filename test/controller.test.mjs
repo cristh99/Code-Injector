@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateRequest, safeArtifactPath } from '../playwright-controller/controller.mjs';
+import { validateRequest, safeArtifactPath, browserHeadlessMode } from '../playwright-controller/controller.mjs';
 
 test('validateRequest accepts a deterministic browser task', () => {
   const request = validateRequest({
@@ -39,4 +39,11 @@ test('validateRequest rejects unsupported actions', () => {
 test('safeArtifactPath prevents traversal outside artifacts', () => {
   assert.throws(() => safeArtifactPath('../secret.txt'), /unsafe artifact path/i);
   assert.match(safeArtifactPath('screens/page.png'), /artifacts\/screens\/page\.png$/);
+});
+
+test('browserHeadlessMode permits an explicit headed runtime only', () => {
+  assert.equal(browserHeadlessMode({}), true);
+  assert.equal(browserHeadlessMode({ PW_HEADLESS: 'true' }), true);
+  assert.equal(browserHeadlessMode({ PW_HEADLESS: 'false' }), false);
+  assert.equal(browserHeadlessMode({ PW_HEADLESS: 'FALSE' }), true);
 });
