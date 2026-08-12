@@ -82,3 +82,17 @@ test('validateRequest rejects pinned downloads outside IAIP official hosts', () 
     /pinned downloads.*IAIP/i,
   );
 });
+
+test('pinnedLookup returns an address array when Node requests all addresses', async () => {
+  const module = await import('../playwright-controller/controller.mjs');
+  assert.equal(typeof module.pinnedLookup, 'function');
+
+  const lookup = module.pinnedLookup('190.107.149.100');
+  await new Promise((resolve, reject) => {
+    lookup('portalunico.iaip.gob.hn', { all: true }, (error, addresses) => {
+      if (error) return reject(error);
+      assert.deepEqual(addresses, [{ address: '190.107.149.100', family: 4 }]);
+      return resolve();
+    });
+  });
+});
