@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { classifyPage, selectPublicArtifactLinks } from '../playwright-handoff/handoff.mjs';
+import {
+  classifyPage,
+  extractTryCloudflareUrl,
+  selectPublicArtifactLinks,
+} from '../playwright-handoff/handoff.mjs';
 
 test('classifyPage identifies a Cloudflare managed challenge', () => {
   assert.equal(classifyPage({
@@ -42,4 +46,16 @@ test('selectPublicArtifactLinks keeps and deduplicates relevant public locators'
     'https://tenant-my.sharepoint.com/:f:/g/example',
     'https://1drv.ms/u/s!example',
   ]);
+});
+
+test('extractTryCloudflareUrl ignores grep filename prefixes', () => {
+  const logs = [
+    '/tmp/cloudflared.log:https://opposite-coordinates-compare-gnu.trycloudflare.com',
+    '/tmp/cloudflared.stdout:duplicate diagnostic line',
+  ].join('\n');
+
+  assert.equal(
+    extractTryCloudflareUrl(logs),
+    'https://opposite-coordinates-compare-gnu.trycloudflare.com',
+  );
 });
