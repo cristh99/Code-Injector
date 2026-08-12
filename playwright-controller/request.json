@@ -1,7 +1,7 @@
 {
-  "run_id": "sedesol-priority-sixpack-remaining5-pinned-v1-20260812",
+  "run_id": "sedesol-priority-remaining4-pinned-v2-20260812",
   "url": "https://example.com/",
-  "timeout_ms": 300000,
+  "timeout_ms": 120000,
   "viewport": { "width": 1280, "height": 720 },
   "actions": [
     {
@@ -32,14 +32,6 @@
       "type": "download",
       "url": "https://portalunico.iaip.gob.hn/ver_archivo/MjYwNTkzNw==",
       "path": "downloads/IAIP_2605937_SEDESOL_TRANSFERENCIA_ENERO_2026.pdf",
-      "pinned_ip": "190.107.149.100",
-      "expected_format": "PDF",
-      "max_bytes": 104857600
-    },
-    {
-      "type": "download",
-      "url": "https://portalunico.iaip.gob.hn/ver_archivo/MjYwNTkyNQ==",
-      "path": "downloads/IAIP_2605925_SEDESOL_C2_ENERO_2026.pdf",
       "pinned_ip": "190.107.149.100",
       "expected_format": "PDF",
       "max_bytes": 104857600
