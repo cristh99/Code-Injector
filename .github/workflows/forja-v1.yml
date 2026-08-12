@@ -1,0 +1,39 @@
+name: FORJA v1 independent reconstruction
+on:
+  workflow_dispatch:
+  push:
+    branches: [forja-control-plane-v1]
+    paths:
+      - 'forja/**'
+      - '.github/workflows/forja-v1.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reconstruct exact release kit
+        run: bash forja/release/reconstruct.sh
+      - name: Verify custody and source tests
+        run: |
+          mkdir -p /tmp/forja-kit
+          tar -xzf forja/release/FORJA-v1.0.0-release-kit.tar.gz -C /tmp/forja-kit
+          cd /tmp/forja-kit/FORJA-v1-release-kit
+          sha256sum -c SHA256SUMS
+          cd source
+          npm test
+      - name: Cold offline install and fail-closed CLI proof
+        run: |
+          npm install --ignore-scripts --offline --prefix /tmp/forja-install /tmp/forja-kit/FORJA-v1-release-kit/packages/evidencia-publica-forja-1.0.0.tgz
+          printf 'SELECT 1 AS ok' | node /tmp/forja-install/node_modules/@evidencia-publica/forja/src/cli.mjs motherduck-lint
+          set +e
+          printf "SELECT * FROM query((SELECT 'SELECT 1'))" | node /tmp/forja-install/node_modules/@evidencia-publica/forja/src/cli.mjs motherduck-lint
+          rc=$?
+          set -e
+          test "$rc" -eq 2
+          printf 'FORJA_CANARY_V1\n' | node /tmp/forja-install/node_modules/@evidencia-publica/forja/src/cli.mjs artifact-seal --artifact-ref inline:github-ci
