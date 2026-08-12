@@ -1,12 +1,12 @@
 {
-  "run_id": "sedesol-c2-2605925-pinned-v1-20260812",
+  "run_id": "sedesol-c2-2605925-api-pinned-retry-v2-20260812",
   "url": "https://example.com/",
   "timeout_ms": 120000,
   "viewport": { "width": 1280, "height": 720 },
   "actions": [
     {
       "type": "download",
-      "url": "https://portalunico.iaip.gob.hn/ver_archivo/MjYwNTkyNQ==",
+      "url": "https://api.iaip.gob.hn/api/public/serve_archivo/?idarchivo=MjYwNTkyNQ==",
       "path": "downloads/IAIP_2605925_SEDESOL_C2_ENERO_2026.pdf",
       "pinned_ip": "190.107.149.100",
       "expected_format": "PDF",
