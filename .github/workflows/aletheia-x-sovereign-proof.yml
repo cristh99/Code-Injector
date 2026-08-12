@@ -40,7 +40,7 @@ jobs:
           mkdir -p "$root"
           shopt -s nullglob
           parts=(releases/chunks/ALETHEIA-X-v0.3.1-sovereign-proof.mjs.gz.b64.part-*)
-          (( ${#parts[@]} == 12 )) || { echo "expected 12 chunks, found ${#parts[@]}" >&2; exit 1; }
+          (( ${#parts[@]} == 13 )) || { echo "expected 13 chunks, found ${#parts[@]}" >&2; exit 1; }
           cat "${parts[@]}" > "$root/aletheia-sovereign-proof.mjs.gz.b64"
           echo "75364b31a99c92cd879d81fceccd2255d75832bf80ca20355d43b00c5cac3f99  $root/aletheia-sovereign-proof.mjs.gz.b64" | sha256sum -c -
           base64 --decode "$root/aletheia-sovereign-proof.mjs.gz.b64" > "$root/aletheia-sovereign-proof.mjs.gz"
