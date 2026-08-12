@@ -77,6 +77,20 @@ export function safeArtifactPath(relativePath) {
   return resolved;
 }
 
+export function pinnedLookup(ipAddress) {
+  const family = isIP(ipAddress);
+  if (family === 0) {
+    fail('pinnedLookup requires a valid IP address');
+  }
+  return (_hostname, options, callback) => {
+    if (options?.all) {
+      callback(null, [{ address: ipAddress, family }]);
+      return;
+    }
+    callback(null, ipAddress, family);
+  };
+}
+
 function normalizeDownloadAction(action, field) {
   const normalizedUrl = validateHttpUrl(action.url, `${field}.url`);
   const parsed = new URL(normalizedUrl);
@@ -232,9 +246,7 @@ function readHttpsResponse(url, action, timeout, redirectDepth = 0) {
       },
     };
     if (action.pinned_ip) {
-      options.lookup = (_hostname, _lookupOptions, callback) => {
-        callback(null, action.pinned_ip, isIP(action.pinned_ip));
-      };
+      options.lookup = pinnedLookup(action.pinned_ip);
     }
 
     const req = httpsRequest(options, (response) => {
