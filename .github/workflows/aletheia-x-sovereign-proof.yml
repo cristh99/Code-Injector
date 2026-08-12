@@ -5,7 +5,7 @@ on:
   push:
     branches: [aletheia-x]
     paths:
-      - 'releases/ALETHEIA-X-v0.3.0-sovereign-proof.mjs.gz.b64'
+      - 'releases/ALETHEIA-X-v0.3.1-sovereign-proof.mjs.gz'
       - '.github/workflows/aletheia-x-sovereign-proof.yml'
 
 permissions:
@@ -21,6 +21,16 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Ensure local PDF parser
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v pdftotext >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends poppler-utils
+          fi
+          pdftotext -v 2>&1 | head -1
+
       - name: Reconstruct content-addressed ALETHEIA executable
         id: source
         shell: bash
@@ -28,10 +38,10 @@ jobs:
           set -euo pipefail
           root="$RUNNER_TEMP/aletheia-x-sovereign"
           mkdir -p "$root"
-          base64 --decode releases/ALETHEIA-X-v0.3.0-sovereign-proof.mjs.gz.b64 > "$root/aletheia-sovereign-proof.mjs.gz"
-          echo "3d88f4ea233304913819b139b5733428a462caeec02746ecb8057976043500ac  $root/aletheia-sovereign-proof.mjs.gz" | sha256sum -c -
+          cp releases/ALETHEIA-X-v0.3.1-sovereign-proof.mjs.gz "$root/aletheia-sovereign-proof.mjs.gz"
+          echo "83daa68a0444e6f132957b02cf134c013cf4c0df134f12011904682c95f73559  $root/aletheia-sovereign-proof.mjs.gz" | sha256sum -c -
           gzip --decompress --stdout "$root/aletheia-sovereign-proof.mjs.gz" > "$root/aletheia-sovereign-proof.mjs"
-          echo "cdd357b13f703d51da45376ac890562b41db712aa9eee590cb4d3aa6f8fdb6e8  $root/aletheia-sovereign-proof.mjs" | sha256sum -c -
+          echo "8bc582d8484d9d02476106a648e1d55615156ea7a3f823ff4569a252ee18b48d  $root/aletheia-sovereign-proof.mjs" | sha256sum -c -
           node --check "$root/aletheia-sovereign-proof.mjs"
           echo "root=$root" >> "$GITHUB_OUTPUT"
           echo "script=$root/aletheia-sovereign-proof.mjs" >> "$GITHUB_OUTPUT"
@@ -43,21 +53,31 @@ jobs:
         run: |
           set -euo pipefail
           root="${{ steps.source.outputs.root }}"
-          env -u FIRECRAWL_API_KEY -u TAVILY_API_KEY -u EXA_API_KEY -u PARALLEL_API_KEY -u TINYFISH_API_KEY             node "${{ steps.source.outputs.script }}" "$root/artifacts" | tee "$root/stdout.json"
+          env -u FIRECRAWL_API_KEY -u TAVILY_API_KEY -u EXA_API_KEY -u PARALLEL_API_KEY -u TINYFISH_API_KEY \
+            node "${{ steps.source.outputs.script }}" "$root/artifacts" | tee "$root/stdout.json"
           node - "$root/artifacts/sovereign-proof-report.json" <<'NODE'
           const fs = require('node:fs');
           const report = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
           const expected = [
-            'zero_paid_credentials', 'zero_external_provider_calls', 'native_http_operational',
-            'direct_cdp_operational', 'sielho_exact_identifiers', 'portal_exact_record', 'portal_file_locator',
+            'zero_paid_credentials', 'zero_external_provider_calls', 'keyless_search_operational',
+            'native_http_transport_operational', 'direct_cdp_operational', 'iaip_targets_handled_fail_closed',
+            'official_detail_recovered', 'official_download_link_discovered', 'official_pdf_magic',
+            'official_pdf_text_markers', 'evidence_hashed',
           ];
           if (!report.success || expected.some((key) => report.gates[key] !== true)) process.exit(1);
           if (report.external_provider_calls.length !== 0) process.exit(1);
           if (report.provider_names.some((name) => !name.startsWith('sovereign-'))) process.exit(1);
-          console.log(JSON.stringify({ success: report.success, gates: report.gates, providers: report.provider_names, report_sha256: report.report_sha256 }, null, 2));
+          console.log(JSON.stringify({
+            success: report.success,
+            gates: report.gates,
+            providers: report.provider_names,
+            official_pdf_sha256: report.official_sedesol.pdf.sha256,
+            report_sha256: report.report_sha256,
+          }, null, 2));
           NODE
 
       - name: Upload sovereign evidence and exact executable
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: aletheia-x-sovereign-proof-${{ github.run_id }}
@@ -66,4 +86,5 @@ jobs:
             ${{ steps.source.outputs.root }}/aletheia-sovereign-proof.mjs.gz
             ${{ steps.source.outputs.root }}/artifacts/**
             ${{ steps.source.outputs.root }}/stdout.json
+          if-no-files-found: warn
           retention-days: 30
