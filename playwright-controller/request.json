@@ -1,42 +1,21 @@
 {
-  "run_id": "canary-20260812-02",
-  "url": "https://demo.playwright.dev/todomvc/",
-  "timeout_ms": 45000,
-  "viewport": { "width": 1440, "height": 900 },
+  "run_id": "sielho-85111-public-link-recovery-v1-20260812",
+  "url": "https://sielho.iaip.gob.hn/solicitud/85111/historial/",
+  "timeout_ms": 90000,
+  "viewport": { "width": 1440, "height": 1200 },
   "actions": [
-    {
-      "type": "wait_for",
-      "locator": { "placeholder": "What needs to be done?" },
-      "state": "visible"
-    },
-    {
-      "type": "fill",
-      "locator": { "placeholder": "What needs to be done?" },
-      "value": "controlled-by-playwright-20260812"
-    },
-    {
-      "type": "press",
-      "locator": { "placeholder": "What needs to be done?" },
-      "key": "Enter"
-    },
-    {
-      "type": "assert_text",
-      "locator": { "text": "controlled-by-playwright-20260812", "exact": true },
-      "equals": "controlled-by-playwright-20260812"
-    },
-    {
-      "type": "screenshot",
-      "path": "todo-canary.png",
-      "full_page": true
-    }
+    { "type": "wait_ms", "ms": 8000 },
+    { "type": "screenshot", "path": "sielho-85111-full.png", "full_page": true }
   ],
   "extract": [
     { "name": "title", "type": "title" },
     { "name": "url", "type": "url" },
-    {
-      "name": "todo_text",
-      "type": "text",
-      "locator": { "text": "controlled-by-playwright-20260812", "exact": true }
-    }
-  ]
+    { "name": "body_text", "type": "text", "locator": { "selector": "body" } },
+    { "name": "all_links", "type": "count", "locator": { "selector": "a[href]" } },
+    { "name": "onedrive_links", "type": "count", "locator": { "selector": "a[href*='onedrive'], a[href*='1drv.ms'], a[href*='sharepoint']" } },
+    { "name": "pdf_links", "type": "count", "locator": { "selector": "a[href*='.pdf'], a[href*='archivo'], a[href*='descargar'], a[download]" } },
+    { "name": "iframes", "type": "count", "locator": { "selector": "iframe" } },
+    { "name": "forms", "type": "count", "locator": { "selector": "form" } }
+  ],
+  "capture_final_screenshot": true
 }
