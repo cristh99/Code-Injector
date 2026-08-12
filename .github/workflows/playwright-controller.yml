@@ -1,0 +1,60 @@
+name: Playwright Controller
+
+on:
+  push:
+    branches: [playwright-controller]
+    paths:
+      - '.github/workflows/playwright-controller.yml'
+      - 'playwright-controller/**'
+      - 'test/controller.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playwright-controller
+  cancel-in-progress: false
+
+jobs:
+  control:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out request and controller
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify system Chrome
+        run: |
+          command -v google-chrome || command -v chromium || command -v chromium-browser
+          (google-chrome --version || chromium --version || chromium-browser --version)
+
+      - name: Install controller dependency
+        working-directory: playwright-controller
+        run: npm install --no-audit --no-fund --ignore-scripts
+
+      - name: Run unit tests
+        run: node --test test/controller.test.mjs
+
+      - name: Execute Playwright request
+        id: execute
+        continue-on-error: true
+        run: node playwright-controller/controller.mjs playwright-controller/request.json
+
+      - name: Upload deterministic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-controller-${{ github.run_id }}
+          path: playwright-controller/artifacts/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Enforce controller result
+        if: steps.execute.outcome != 'success'
+        run: exit 1
