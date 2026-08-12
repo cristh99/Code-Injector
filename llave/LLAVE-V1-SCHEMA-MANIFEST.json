@@ -1,0 +1,71 @@
+{
+  "additive": true,
+  "artifact": "LLAVE",
+  "authorization_model": {
+    "assignment_binding": "FORJA session id, nonce, generation, fence SHA-256 and assignment lease token",
+    "grant_scope": [
+      "resource patterns",
+      "operations",
+      "modes",
+      "numeric ceilings",
+      "exact constraints",
+      "expiry"
+    ],
+    "operational_ability_surface": "agent_memory.agent_capabilities_v2",
+    "refined_authorization_surface": "agent_memory.llave_capability_grants_v1",
+    "write_without_refined_requirement": "FAIL_CLOSED"
+  },
+  "contract_identity": {
+    "canonical_json": "{\"capability_code\":\"motherduck:write\",\"constraints\":{\"current_promotion_authorized\":false,\"single_writer\":true},\"format\":\"llave-capability-contract-v1\",\"limits\":{\"external_spend_usd_max\":0,\"max_calls\":1,\"max_mutations\":4,\"query_rw_max\":0},\"modes\":[\"VERSIONED_NON_CURRENT_FAIL_CLOSED\"],\"operations\":[\"CREATE_TABLE_AS\",\"CREATE_VIEW\",\"READBACK\",\"TRANSACTION\"],\"resources\":[\"my_db.institutional_cache.choloma_entity_93_*\"]}",
+    "node_postgres_parity": true,
+    "numbers": "JSON-safe integers only (abs <= 9007199254740991); limits non-negative",
+    "sha256": "72d065cb9bab85897dbc6f19396da1039b30c639cdda4b70277293f86d28c63c"
+  },
+  "cooperation_base": "2.2.0",
+  "format": "llave-schema-manifest-v1",
+  "legacy_functions_replaced": false,
+  "migration": "sql/001_llave_v1.sql",
+  "objects": {
+    "functions": [
+      "agent_memory.llave_canonical_json_v1",
+      "agent_memory.llave_normalize_contract_v1",
+      "agent_memory.llave_contract_sha256_v1",
+      "agent_memory.llave_resource_pattern_valid_v1",
+      "agent_memory.llave_resource_covers_v1",
+      "agent_memory.llave_contract_valid_v1",
+      "agent_memory.llave_contract_satisfies_v1",
+      "agent_memory.llave_issue_grant_v1",
+      "agent_memory.llave_register_work_requirement_v1",
+      "agent_memory.llave_authorization_certificate_v1",
+      "agent_memory.llave_claim_next_work_v1",
+      "agent_memory.llave_assert_lease_v1",
+      "agent_memory.llave_revoke_grant_v1"
+    ],
+    "tables": [
+      "agent_memory.llave_schema_versions_v1",
+      "agent_memory.llave_authorities_v1",
+      "agent_memory.llave_capability_grants_v1",
+      "agent_memory.llave_work_requirements_v1",
+      "agent_memory.llave_capability_leases_v1"
+    ],
+    "views": [
+      "agent_memory.llave_effective_readiness_v1"
+    ]
+  },
+  "production_applied": false,
+  "requires": {
+    "FORJA": "1.0.0",
+    "PostgreSQL": ">=18",
+    "pgcrypto": true
+  },
+  "safety": {
+    "basic_memory": "PROHIBITED",
+    "drive_mutations_in_canary": 0,
+    "external_source_calls_in_canary": 0,
+    "external_spend_usd": 0,
+    "motherduck_mutations_in_canary": 0,
+    "production_migration_requires_separate_authorization": true,
+    "self_verification_forbidden": true
+  },
+  "version": "1.0.0"
+}
