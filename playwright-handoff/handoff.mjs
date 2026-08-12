@@ -40,6 +40,11 @@ export function classifyPage({ title = '', bodyText = '', url = '', expectedHost
   return 'source';
 }
 
+export function extractTryCloudflareUrl(text) {
+  const match = String(text ?? '').match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/i);
+  return match?.[0] ?? null;
+}
+
 function isArtifactHost(hostname) {
   const host = hostname.toLowerCase();
   return ARTIFACT_HOSTS.some((candidate) => host === candidate || host.endsWith(`.${candidate}`));

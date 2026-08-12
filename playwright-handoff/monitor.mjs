@@ -1,5 +1,6 @@
 import fsp from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { classifyPage, selectPublicArtifactLinks } from './handoff.mjs';
 
@@ -74,26 +75,37 @@ function extractIdentifier(bodyText, pattern) {
   return bodyText.match(pattern)?.[0] ?? null;
 }
 
+async function collectLinks(page) {
+  const allPageLinks = await page.locator('a[href]').evaluateAll((elements) => elements.map((element) => element.href));
+  const contentSelector = '#historial-solicitud a[href], #historial-preguntas a[href], main a[href], [role="main"] a[href], .col-md-9 a[href]';
+  const contentLinks = await page.locator(contentSelector).evaluateAll((elements) => elements.map((element) => element.href));
+  return {
+    allPageLinks: [...new Set(allPageLinks)],
+    contentLinks: [...new Set(contentLinks)],
+  };
+}
+
 async function capture(page, request, snapshot, startedAt, challengeObservations) {
   await delay(request.settle_ms);
   await page.waitForLoadState('domcontentloaded', { timeout: 10_000 }).catch(() => {});
 
-  const [title, bodyText, html, allLinks] = await Promise.all([
+  const [title, bodyText, html, linkSets] = await Promise.all([
     page.title().catch(() => snapshot.title),
     page.locator('body').innerText({ timeout: 10_000 }).catch(() => snapshot.bodyText),
     page.content(),
-    page.locator('a[href]').evaluateAll((elements) => elements.map((element) => element.href)),
+    collectLinks(page),
   ]);
 
-  const publicArtifactLinks = selectPublicArtifactLinks(allLinks);
+  const publicArtifactLinks = selectPublicArtifactLinks(linkSets.contentLinks);
   const screenshotPath = path.join(ARTIFACT_ROOT, 'final.png');
   await page.screenshot({ path: screenshotPath, fullPage: true });
   await fsp.writeFile(path.join(ARTIFACT_ROOT, 'final.html'), html, 'utf8');
   await fsp.writeFile(path.join(ARTIFACT_ROOT, 'body.txt'), bodyText, 'utf8');
 
+  const challengeSeen = challengeObservations.some((observation) => observation.state === 'challenge');
   const result = {
     success: true,
-    status: 'SOURCE_REACHED_AFTER_HUMAN_HANDOFF',
+    status: challengeSeen ? 'SOURCE_REACHED_AFTER_HUMAN_HANDOFF' : 'SOURCE_REACHED_VISIBLE_CHROME_CDP',
     run_id: request.run_id,
     started_at: startedAt,
     finished_at: new Date().toISOString(),
@@ -102,7 +114,9 @@ async function capture(page, request, snapshot, startedAt, challengeObservations
     request_identifier: extractIdentifier(bodyText, /\bSOL-[A-ZÁÉÍÓÚÑ0-9-]+-\d+-\d{4}\b/i),
     response_memorandum: extractIdentifier(bodyText, /\b(?:GA|DPBS)-[A-ZÁÉÍÓÚÑ0-9-]+-\d+-\d{4}\b/i),
     public_artifact_links: publicArtifactLinks,
-    all_link_count: allLinks.length,
+    content_link_count: linkSets.contentLinks.length,
+    all_page_link_count: linkSets.allPageLinks.length,
+    challenge_seen: challengeSeen,
     challenge_observations: challengeObservations,
   };
   await writeJson('result.json', result);
@@ -195,6 +209,7 @@ export async function main(requestPath = process.argv[2] ?? 'playwright-handoff/
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+const isEntrypoint = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isEntrypoint) {
   await main();
 }

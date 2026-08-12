@@ -58,7 +58,13 @@ echo $! >/tmp/cloudflared.pid
 
 TUNNEL_URL=""
 for _ in $(seq 1 60); do
-  TUNNEL_URL="$(grep -Eo 'https://[a-z0-9-]+\.trycloudflare\.com' /tmp/cloudflared.log /tmp/cloudflared.stdout 2>/dev/null | head -n1 || true)"
+  TUNNEL_URL="$(node --input-type=module -e '
+    import fs from "node:fs";
+    import { extractTryCloudflareUrl } from "./playwright-handoff/handoff.mjs";
+    const paths = ["/tmp/cloudflared.log", "/tmp/cloudflared.stdout"];
+    const text = paths.map((p) => { try { return fs.readFileSync(p, "utf8"); } catch { return ""; } }).join("\n");
+    process.stdout.write(extractTryCloudflareUrl(text) ?? "");
+  ')"
   if [[ -n "$TUNNEL_URL" ]]; then break; fi
   sleep 1
 done
