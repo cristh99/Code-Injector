@@ -1,0 +1,112 @@
+name: ALETHEIA X
+
+on:
+  push:
+    branches: [aletheia-x]
+    paths:
+      - 'aletheia-x/**'
+      - 'releases/chunks/ALETHEIA-X-v0.2.0.tar.gz.b64.part-*'
+      - 'releases/ALETHEIA-X-v0.2.0.manifest.json'
+      - 'docs/superpowers/specs/2026-08-12-aletheia-x-design.md'
+      - 'docs/superpowers/plans/2026-08-12-aletheia-x-core.md'
+      - '.github/workflows/aletheia-x.yml'
+  pull_request:
+    paths:
+      - 'aletheia-x/**'
+      - 'releases/chunks/ALETHEIA-X-v0.2.0.tar.gz.b64.part-*'
+      - 'releases/ALETHEIA-X-v0.2.0.manifest.json'
+      - '.github/workflows/aletheia-x.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reconstruct and verify release archive
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/ALETHEIA-X-v0.2.0.tar.gz"
+          release_root="$RUNNER_TEMP/aletheia-release"
+          rm -rf "$release_root"
+          mkdir -p "$release_root"
+
+          if [[ -f "$GITHUB_WORKSPACE/aletheia-x/package.json" ]]; then
+            cp -a "$GITHUB_WORKSPACE/aletheia-x" "$release_root/aletheia-x"
+          else
+            shopt -s nullglob
+            parts=("$GITHUB_WORKSPACE"/releases/chunks/ALETHEIA-X-v0.2.0.tar.gz.b64.part-*)
+            (( ${#parts[@]} == 9 )) || {
+              echo "expected 9 archive chunks, found ${#parts[@]}" >&2
+              exit 1
+            }
+            cat "${parts[@]}" | base64 --decode > "$archive"
+            echo "2821f6185a885cfb4d6855b1a59570e9b51b63cc7c19958bf4aa344cbb2acfe9  $archive" | sha256sum -c -
+            tar -xzf "$archive" -C "$release_root"
+          fi
+
+          test -f "$release_root/aletheia-x/package.json"
+          echo "release_root=$release_root" >> "$GITHUB_OUTPUT"
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+      - name: Syntax check
+        working-directory: ${{ steps.release.outputs.release_root }}/aletheia-x
+        run: npm run check
+      - name: Unit and integration tests
+        working-directory: ${{ steps.release.outputs.release_root }}/aletheia-x
+        run: npm test
+      - name: Deterministic Firecrawl comparison
+        working-directory: ${{ steps.release.outputs.release_root }}/aletheia-x
+        run: |
+          set -euo pipefail
+          npm run --silent benchmark | tee benchmark-report.json
+          echo "8edc06bc373f5a45d5f5e9010a0c532fd82d78049f897ba0bba1d3284bd0b113  benchmark-report.json" | sha256sum -c -
+      - name: CLI smoke tests
+        working-directory: ${{ steps.release.outputs.release_root }}/aletheia-x
+        run: |
+          set -euo pipefail
+          node src/cli.mjs --help >/dev/null
+          evidence="$RUNNER_TEMP/aletheia-evidence.json"
+          node --input-type=module <<'NODE' > "$evidence"
+          import { createEvidenceBundle } from './src/evidence.mjs';
+          const task = { operation: 'fetch', urls: ['https://example.com/'] };
+          const results = [{
+            provider: 'fixture',
+            operation: 'fetch',
+            documents: [{ url: 'https://example.com/', content: 'body' }],
+            raw: { ok: true },
+          }];
+          process.stdout.write(JSON.stringify(createEvidenceBundle(task, results, { documents: [], contradictions: [] }, {
+            created_at: '2026-08-12T00:00:00.000Z',
+          })));
+          NODE
+          node src/cli.mjs --verify-evidence "$evidence" >/dev/null
+      - name: Credential and placeholder scans
+        working-directory: ${{ steps.release.outputs.release_root }}/aletheia-x
+        run: |
+          set -euo pipefail
+          ! grep -RInE '(sk-[A-Za-z0-9_-]{20,}|tvly-[A-Za-z0-9_-]{20,}|fc-[A-Za-z0-9_-]{20,}|Bearer[[:space:]]+[A-Za-z0-9._-]{20,})' . \
+            --exclude='benchmark-report.json'
+          ! grep -RInE '\b(TODO|TBD|FIXME|HACK)\b' src test bench README.md package.json
+      - name: Upload benchmark report
+        uses: actions/upload-artifact@v4
+        with:
+          name: aletheia-x-benchmark-${{ github.run_id }}
+          path: ${{ steps.release.outputs.release_root }}/aletheia-x/benchmark-report.json
+          retention-days: 14
+      - name: Upload verified release inputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: aletheia-x-release-inputs-${{ github.run_id }}
+          path: |
+            releases/ALETHEIA-X-v0.2.0.manifest.json
+            releases/chunks/ALETHEIA-X-v0.2.0.tar.gz.b64.part-*
+          retention-days: 14
