@@ -1,13 +1,13 @@
 {
-  "run_id": "sedesol-banadesa-2579867-pinned-v1-20260812",
+  "run_id": "sedesol-c2-2548333-pinned-retry-v1-20260812",
   "url": "https://example.com/",
   "timeout_ms": 120000,
   "viewport": { "width": 1280, "height": 720 },
   "actions": [
     {
       "type": "download",
-      "url": "https://portalunico.iaip.gob.hn/ver_archivo/MjU3OTg2Nw==",
-      "path": "downloads/IAIP_2579867_SEDESOL_BANADESA_AYUDAS_SOCIALES_ADENDUM_2025.pdf",
+      "url": "https://portalunico.iaip.gob.hn/ver_archivo/MjU0ODMzMw==",
+      "path": "downloads/IAIP_2548333_SEDESOL_C2_NOVIEMBRE_2025.pdf",
       "pinned_ip": "190.107.149.100",
       "expected_format": "PDF",
       "max_bytes": 104857600
