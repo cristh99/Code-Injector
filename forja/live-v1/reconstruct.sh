@@ -21,11 +21,22 @@ test "$(wc -c < "$OUT/rollback_forja_v1.sql")" -eq 3354
 test "$(wc -c < "$OUT/MANIFEST.json")" -eq 1788
 test "$(wc -c < "$OUT/SHA256SUMS")" -eq 867
 python3 - "$OUT" "$ROOT/FORJA-LIVE-CERTIFICATION.json" <<'PY'
-import hashlib, json, pathlib, re, sys
+import json, pathlib, re, sys
 out=pathlib.Path(sys.argv[1]); cert=json.loads(pathlib.Path(sys.argv[2]).read_text())
 sql=(out/'001_forja_v1.sql').read_text()
-assert len(re.findall(r'CREATE OR REPLACE FUNCTION agent_memory\.forja_',sql)) == 21
-assert len(re.findall(r'CREATE TABLE IF NOT EXISTS agent_memory\.forja_',sql)) == 4
+function_names=re.findall(r'CREATE OR REPLACE FUNCTION agent_memory\.(forja_[a-z0-9_]+)',sql,re.I)
+table_names=re.findall(r'CREATE TABLE IF NOT EXISTS agent_memory\.(forja_[a-z0-9_]+)',sql,re.I)
+print(json.dumps({
+  'diagnostic':'FORJA_DECLARATION_COUNTS',
+  'function_declarations':len(function_names),
+  'distinct_function_names':len(set(function_names)),
+  'function_names':function_names,
+  'table_declarations':len(table_names),
+  'distinct_table_names':len(set(table_names)),
+  'table_names':table_names,
+},sort_keys=True))
+assert len(function_names) == 21
+assert len(table_names) == 4
 assert 'forja_sessions_v1_one_active_identity' in sql
 assert 'UNSAFE_DYNAMIC_SQL_TRANSPORT' in sql
 assert 'AUTOMATIC_VERIFICATION_LEAF_REQUIRES_YES' in sql
