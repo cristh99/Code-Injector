@@ -1,11 +1,13 @@
 {
-  "run_id": "sielho-85111-public-link-recovery-v1-20260812",
+  "run_id": "sielho-85111-cloudflare-wait-reload-v2-20260812",
   "url": "https://sielho.iaip.gob.hn/solicitud/85111/historial/",
-  "timeout_ms": 90000,
+  "timeout_ms": 120000,
   "viewport": { "width": 1440, "height": 1200 },
   "actions": [
-    { "type": "wait_ms", "ms": 8000 },
-    { "type": "screenshot", "path": "sielho-85111-full.png", "full_page": true }
+    { "type": "wait_ms", "ms": 30000 },
+    { "type": "reload", "wait_until": "domcontentloaded" },
+    { "type": "wait_ms", "ms": 30000 },
+    { "type": "screenshot", "path": "sielho-85111-after-wait-reload.png", "full_page": true }
   ],
   "extract": [
     { "name": "title", "type": "title" },
