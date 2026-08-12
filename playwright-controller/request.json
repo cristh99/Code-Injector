@@ -1,0 +1,42 @@
+{
+  "run_id": "canary-20260812-02",
+  "url": "https://demo.playwright.dev/todomvc/",
+  "timeout_ms": 45000,
+  "viewport": { "width": 1440, "height": 900 },
+  "actions": [
+    {
+      "type": "wait_for",
+      "locator": { "placeholder": "What needs to be done?" },
+      "state": "visible"
+    },
+    {
+      "type": "fill",
+      "locator": { "placeholder": "What needs to be done?" },
+      "value": "controlled-by-playwright-20260812"
+    },
+    {
+      "type": "press",
+      "locator": { "placeholder": "What needs to be done?" },
+      "key": "Enter"
+    },
+    {
+      "type": "assert_text",
+      "locator": { "text": "controlled-by-playwright-20260812", "exact": true },
+      "equals": "controlled-by-playwright-20260812"
+    },
+    {
+      "type": "screenshot",
+      "path": "todo-canary.png",
+      "full_page": true
+    }
+  ],
+  "extract": [
+    { "name": "title", "type": "title" },
+    { "name": "url", "type": "url" },
+    {
+      "name": "todo_text",
+      "type": "text",
+      "locator": { "text": "controlled-by-playwright-20260812", "exact": true }
+    }
+  ]
+}
