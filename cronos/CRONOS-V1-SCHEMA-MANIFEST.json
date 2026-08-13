@@ -1,0 +1,61 @@
+{
+  "artifact": "CRONOS",
+  "cooperation_base": "2.2.0",
+  "distinct_automatic_qa_required": true,
+  "expanded_name": "Corte Resiliente de Operaciones, Nodos y Observaciones Selladas",
+  "external_spend_usd": 0,
+  "format": "cronos-schema-manifest-v1",
+  "human_review_required": false,
+  "migration": {
+    "additive": true,
+    "binding": "EXTERNAL_MANIFEST_SHA256_BEFORE_APPLY",
+    "bytes": 36273,
+    "database_row_self_hash": false,
+    "path": "sql/001_cronos_v1.sql",
+    "sha256": "e3df3b0ec1e522bcd7edd3f82ae500643bf2e8389d6627c728b4f897f4f71cb0"
+  },
+  "neon_canary": {
+    "authoritative_neon_receipt_sha256": "3d7ab6d6f03319aa62276200274d519f1eb32dc881448aaab9504ddbee9216ad",
+    "bytes": 3053,
+    "checks": "11/11 PASS",
+    "path": "CRONOS-V1-NEON-CANARY-RECEIPT.json",
+    "portable_file_sha256": "05f55118e7175b13d3a0b29fbf8401be6e2cf19252a2e9e5eddbefebb4cfb481",
+    "production_objects_after_canary": 0,
+    "temporary_branch": "br-solitary-poetry-axiiyfto"
+  },
+  "node_reference_model": {
+    "behaviors": [
+      "CANONICAL_JSON_SHA256",
+      "POST_SUBMIT_INVARIANT_COMPILATION",
+      "SNAPSHOT_DRIFT_CLASSIFICATION"
+    ],
+    "dependency_free": true,
+    "engines": "node >=22",
+    "entrypoint": "src/index.mjs",
+    "tests": "17/17 PASS"
+  },
+  "postgres_target": "18",
+  "production_applied": false,
+  "required_behaviors": [
+    "POST_SUBMIT_CUT_COMPILED_BY_CRONOS",
+    "PRODUCER_EXPECTED_VALUES_REJECTED",
+    "SNAPSHOT_SHA256_CAS_REQUIRED",
+    "IMMUTABLE_MISMATCH_FAILS_CLOSED",
+    "INVALIDATING_DRIFT_DOWNGRADES_TO_INCONCLUSIVE",
+    "ALLOWLISTED_DRIFT_REMAINS_PASS_AT_CUT",
+    "SELF_VERIFICATION_FORBIDDEN",
+    "FINALIZATION_RECEIPTS_IDEMPOTENT_AND_APPEND_ONLY"
+  ],
+  "source_manifest": {
+    "path": "CRONOS-V1-SOURCE-MANIFEST.json",
+    "self_hash_recorded_externally": true
+  },
+  "surface": {
+    "append_only_triggers": 1,
+    "explicit_indexes": 1,
+    "functions": 18,
+    "tables": 4,
+    "views": 1
+  },
+  "version": "1.0.0"
+}
