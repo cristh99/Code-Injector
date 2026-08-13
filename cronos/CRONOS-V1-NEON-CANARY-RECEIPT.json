@@ -1,0 +1,52 @@
+{
+  "format": "cronos-neon-canary-portable-mirror-v1",
+  "schema_version": "cronos/1.0.0-r2",
+  "all_pass": true,
+  "checks_total": 11,
+  "checks_passed": 11,
+  "checks_failed": 0,
+  "authoritative_neon_receipt_sha256": "3d7ab6d6f03319aa62276200274d519f1eb32dc881448aaab9504ddbee9216ad",
+  "assertions": [
+    {"check": "post_submit_cut_compiled", "passed": true},
+    {"check": "producer_expected_rejected_before_submit", "passed": true},
+    {"check": "stable_pass", "passed": true},
+    {"check": "allowlisted_status_transition_pass", "passed": true},
+    {"check": "state_drift_downgraded", "passed": true},
+    {"check": "immutable_artifact_mismatch_failed", "passed": true},
+    {"check": "terminal_request_not_rerecorded", "passed": true},
+    {"check": "snapshot_cas_rejected", "passed": true},
+    {"check": "self_verification_rejected", "passed": true},
+    {"check": "receipt_idempotent", "passed": true},
+    {"check": "receipt_append_only", "passed": true}
+  ],
+  "cases": [
+    {"case": "stable", "final_verdict": "PASS", "disposition": "PASS_CURRENT", "legacy_recorded": true},
+    {"case": "allowlisted", "final_verdict": "PASS", "disposition": "PASS_AT_CUT_LIVE_DRIFT_NONINVALIDATING", "legacy_recorded": true},
+    {"case": "drift", "final_verdict": "INCONCLUSIVE", "disposition": "INCONCLUSIVE_INVALIDATING_DRIFT", "legacy_recorded": true},
+    {"case": "mismatch", "final_verdict": "FAIL", "disposition": "FAIL_SNAPSHOT_MISMATCH", "legacy_recorded": true},
+    {"case": "terminal", "final_verdict": "INCONCLUSIVE", "disposition": "INCONCLUSIVE_INVALIDATING_DRIFT", "legacy_recorded": false}
+  ],
+  "post_submit_state": {
+    "property": "COMPILED_EXPECTED_EQUALS_ACTUAL_POST_SUBMIT_STATE",
+    "canonical_dispatcher_work_state_version": 3,
+    "work_status": "VERIFYING",
+    "assignment_status": "VERIFYING"
+  },
+  "temporary_branch": "br-solitary-poetry-axiiyfto",
+  "production_branch": "br-flat-block-ax5eh8og",
+  "production_readback": {
+    "cooperation_version": "2.2.0",
+    "cronos_functions": 0,
+    "cronos_relations": 0,
+    "cronos_triggers": 0,
+    "synthetic_messages": 0,
+    "synthetic_work_rows": 0
+  },
+  "production_mutations": 0,
+  "source_calls": 0,
+  "query_rw": 0,
+  "self_verification": false,
+  "external_spend_usd": 0,
+  "human_review_required": false,
+  "proof_boundary": "DISPOSABLE_BRANCH_BEHAVIORAL_CANARY; PRODUCTION_NOT_MIGRATED; DISTINCT_AUTOMATIC_QA_REQUIRED"
+}
