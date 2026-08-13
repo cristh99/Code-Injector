@@ -1,0 +1,13 @@
+{
+  "format": "cronos-drift-audit-v1",
+  "measured_at_utc": "2026-08-13T12:00:00Z",
+  "total_submissions": 60,
+  "cancelled_before_verdict": 7,
+  "verification_latency_seconds": {
+    "p90_gt_hours": 11,
+    "max_gt_hours": 15.6
+  },
+  "interpretation": "The legacy queue can verify materially later than submission; the verdict must be bound to a post-submit state cut and immutable evidence set.",
+  "production_mutations": 0,
+  "external_spend_usd": 0
+}
