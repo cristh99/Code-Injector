@@ -9,12 +9,18 @@ on:
 permissions:
   contents: read
 jobs:
-  reconstruct:
+  reconstruct-and-canary:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
+    env:
+      PGHOST: ep-mute-dust-axrsmw22.c-4.us-east-2.aws.neon.tech
+      PGPORT: '5432'
+      PGDATABASE: neondb
+      PGUSER: neondb_owner
+      PGSSLMODE: require
     steps:
       - uses: actions/checkout@v4
-      - name: Reconstruct and verify exact Neon-tested payload
+      - name: Reconstruct and verify exact payload custody
         run: bash forja/live-v1/reconstruct.sh
       - name: Confirm production remains forbidden by certification
         run: |
@@ -23,6 +29,28 @@ jobs:
           c=json.load(open('forja/live-v1/FORJA-LIVE-CERTIFICATION.json'))
           assert c['verification']['production_applied'] is False
           assert c['verification']['promotion_authorized'] is False
-          assert c['live_neon']['gates_passed']==20
-          print('FORJA_LIVE_CUSTODY_PASS')
+          print('FORJA_PRODUCTION_FORBIDDEN_PASS')
           PY
+      - name: Install, canary, rollback, and remove exact payload on isolated Neon branch
+        run: |
+          set -euo pipefail
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y postgresql-client
+          fi
+          cleanup() {
+            psql -X -v ON_ERROR_STOP=1 -f /tmp/forja-live-v1/rollback_forja_v1.sql >/tmp/forja-explicit-rollback.log 2>&1 || true
+          }
+          trap cleanup EXIT
+          baseline="$(psql -X -At -v ON_ERROR_STOP=1 -c "SELECT (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='agent_memory' AND c.relkind='r' AND c.relname LIKE 'forja_%_v1')::text||'|'||(SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='agent_memory' AND p.proname LIKE 'forja_%_v1')::text")"
+          test "$baseline" = '0|0'
+          psql -X -v ON_ERROR_STOP=1 -f /tmp/forja-live-v1/001_forja_v1.sql | tee /tmp/forja-install.log
+          installed="$(psql -X -At -v ON_ERROR_STOP=1 -c "SELECT (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='agent_memory' AND c.relkind='r' AND c.relname LIKE 'forja_%_v1')::text||'|'||(SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='agent_memory' AND p.proname LIKE 'forja_%_v1')::text")"
+          test "$installed" = '7|22'
+          psql -X -v ON_ERROR_STOP=1 -f /tmp/forja-live-v1/002_forja_v1_canary.sql | tee /tmp/forja-canary.log
+          grep -q 'forja_canary_rollback_readback' /tmp/forja-canary.log
+          psql -X -v ON_ERROR_STOP=1 -f /tmp/forja-live-v1/rollback_forja_v1.sql | tee /tmp/forja-explicit-rollback.log
+          after="$(psql -X -At -v ON_ERROR_STOP=1 -c "SELECT (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='agent_memory' AND c.relname LIKE 'forja_%_v1')::text||'|'||(SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='agent_memory' AND p.proname LIKE 'forja_%_v1')::text")"
+          test "$after" = '0|0'
+          trap - EXIT
+          printf '{"status":"PASS","branch_id":"br-late-darkness-axovrbmc","installed_tables":7,"installed_functions":22,"explicit_rollback_objects":"0|0","production_applied":false}\n'
