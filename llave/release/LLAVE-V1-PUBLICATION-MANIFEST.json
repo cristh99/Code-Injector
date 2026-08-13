@@ -18,10 +18,19 @@
       "llave/release/LLAVE-v1.0.0-release-kit.tar.gz.b64.part-04",
       "llave/release/LLAVE-v1.0.0-release-kit.tar.gz.b64.segment-05-06",
       "llave/release/LLAVE-v1.0.0-release-kit.tar.gz.b64.segment-07-08",
-      "llave/release/LLAVE-v1.0.0-release-kit.tar.gz.b64.part-09",
+      "llave/release/part-09-split/part-09-00.txt",
+      "llave/release/part-09-split/part-09-01.txt",
+      "llave/release/part-09-split/part-09-02.txt",
+      "llave/release/part-09-split/part-09-03.txt",
       "llave/release/LLAVE-v1.0.0-release-kit.tar.gz.b64.part-10",
       "llave/release/LLAVE-v1.0.0-release-kit.tar.gz.b64.part-11",
       "llave/release/LLAVE-v1.0.0-release-kit.tar.gz.b64.part-12"
+    ],
+    "part09_git_blobs": [
+      "4a4acc267fd3d8efbf80c42dd7b48d37480d979d",
+      "35a2e149d132d91b035dd6b0b356ea4d1d7c3904",
+      "781d26d1c6ac3bf728c5f7a98f1ae3e5ee467e94",
+      "2b28dd30b5c71a054729bfea79f3fb09a2d7917f"
     ],
     "sha256": "3c9692f57e2a19a09be26c4d460cf70372a1a7d82f98595430f637ffc45f14f6",
     "size_bytes": 74665,
