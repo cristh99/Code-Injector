@@ -1,0 +1,76 @@
+name: ARCA v1 clean-room self-recovery
+
+on:
+  push:
+    branches: [arca-artifact-transport-v1-r2]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+
+      - name: Reconstruct real FORJA canary
+        run: |
+          set -euo pipefail
+          bash forja/release/reconstruct.sh /tmp/FORJA-v1.0.0-release-kit.tar.gz
+          echo '979f1b312e469bf8d53eaa7cc89fcda85425da7160df1ec455f4e0c39a46d014  /tmp/FORJA-v1.0.0-release-kit.tar.gz' | sha256sum -c -
+
+      - name: Run ARCA source suite against real artifact
+        env:
+          ARCA_REAL_CANARY: /tmp/FORJA-v1.0.0-release-kit.tar.gz
+        run: npm test --prefix arca
+
+      - name: Build npm package twice byte-identically
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/arca-pack-a /tmp/arca-pack-b
+          (cd arca && npm pack --pack-destination /tmp/arca-pack-a)
+          (cd arca && npm pack --pack-destination /tmp/arca-pack-b)
+          cmp /tmp/arca-pack-a/evidencia-publica-arca-1.0.0.tgz /tmp/arca-pack-b/evidencia-publica-arca-1.0.0.tgz
+          echo 'dfefe58ef8f69188cc174601c8562a6c05a879716ef287c9fe1548f6bd98b638  /tmp/arca-pack-a/evidencia-publica-arca-1.0.0.tgz' | sha256sum -c -
+
+      - name: Build release kit twice byte-identically
+        run: |
+          set -euo pipefail
+          bash arca/scripts/build-release.sh /tmp/ARCA-v1.0.0-a.tar.gz /tmp/arca-pack-a/evidencia-publica-arca-1.0.0.tgz /tmp/FORJA-v1.0.0-release-kit.tar.gz
+          bash arca/scripts/build-release.sh /tmp/ARCA-v1.0.0-b.tar.gz /tmp/arca-pack-a/evidencia-publica-arca-1.0.0.tgz /tmp/FORJA-v1.0.0-release-kit.tar.gz
+          cmp /tmp/ARCA-v1.0.0-a.tar.gz /tmp/ARCA-v1.0.0-b.tar.gz
+          echo 'c5c409f2ddccf2a93ea2b0feea160f215be1b43923af7ffafaf8998db2ec65cd  /tmp/ARCA-v1.0.0-a.tar.gz' | sha256sum -c -
+          mkdir -p /tmp/arca-kit
+          tar -xzf /tmp/ARCA-v1.0.0-a.tar.gz -C /tmp/arca-kit
+          (cd /tmp/arca-kit/ARCA-v1-release-kit && sha256sum -c SHA256SUMS && node VERIFY-RELEASE.mjs)
+
+      - name: ARCA self-recovers after erasure and corruption
+        run: |
+          set -euo pipefail
+          node arca/src/cli.mjs encode /tmp/ARCA-v1.0.0-a.tar.gz /tmp/arca-shards --data=10 --parity=5 --artifact-id=ARCA-v1.0.0-release-kit --artifact-ref=github-actions:ARCA-v1.0.0 --media-type=application/gzip
+          node arca/src/cli.mjs recover /tmp/arca-shards/manifest.json /tmp/arca-shards /tmp/ARCA-v1.0.0-recovered.tar.gz --missing=0,2,7 --corrupt=8
+          cmp /tmp/ARCA-v1.0.0-a.tar.gz /tmp/ARCA-v1.0.0-recovered.tar.gz
+          echo 'c5c409f2ddccf2a93ea2b0feea160f215be1b43923af7ffafaf8998db2ec65cd  /tmp/ARCA-v1.0.0-recovered.tar.gz' | sha256sum -c -
+
+      - name: Cold offline install recovers independent FORJA artifact
+        run: |
+          set -euo pipefail
+          npm install --ignore-scripts --offline --prefix /tmp/arca-install /tmp/arca-pack-a/evidencia-publica-arca-1.0.0.tgz
+          node /tmp/arca-install/node_modules/@evidencia-publica/arca/src/cli.mjs encode /tmp/FORJA-v1.0.0-release-kit.tar.gz /tmp/forja-shards --data=10 --parity=5
+          node /tmp/arca-install/node_modules/@evidencia-publica/arca/src/cli.mjs recover /tmp/forja-shards/manifest.json /tmp/forja-shards /tmp/FORJA-recovered.tar.gz --missing=1,4,12 --corrupt=13
+          cmp /tmp/FORJA-v1.0.0-release-kit.tar.gz /tmp/FORJA-recovered.tar.gz
+
+      - name: Publish proof artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ARCA-v1.0.0-proof
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            /tmp/ARCA-v1.0.0-a.tar.gz
+            /tmp/arca-pack-a/evidencia-publica-arca-1.0.0.tgz
+            /tmp/arca-shards/manifest.json
