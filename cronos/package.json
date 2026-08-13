@@ -1,0 +1,22 @@
+{
+  "name": "@evidencia-publica/cronos",
+  "version": "1.0.0",
+  "description": "Snapshot-CAS automatic verification for EVIDENCIA_PUBLICA",
+  "type": "module",
+  "engines": {"node": ">=22"},
+  "exports": "./src/index.mjs",
+  "scripts": {
+    "test": "node --test",
+    "coverage": "node --test --experimental-test-coverage"
+  },
+  "files": [
+    "src",
+    "sql",
+    "docs",
+    "README.md",
+    "LICENSE",
+    "CRONOS-V1-SCHEMA-MANIFEST.json",
+    "CRONOS-V1-NEON-CANARY-RECEIPT.json"
+  ],
+  "license": "MIT"
+}
