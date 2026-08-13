@@ -1,0 +1,3 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import {readFile} from 'node:fs/promises'; import {encodeArtifact,recoverArtifact} from '../src/transport.mjs';
+const path=process.env.ARCA_REAL_CANARY;
+test('real artifact canary recovers byte-identically when supplied',{skip:!path},async()=>{const bytes=await readFile(path);const e=encodeArtifact(bytes,{artifactId:'real',artifactRef:`file:${path}`,mediaType:'application/gzip',dataShards:10,parityShards:5});const m=new Map(e.shards.filter(s=>![0,3,11,14].includes(s.index)).map(s=>[s.index,s.bytes]));assert.deepEqual(recoverArtifact(e.manifest,m),bytes);});
