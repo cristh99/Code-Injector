@@ -4,16 +4,28 @@
   "format": "llave-publication-manifest-v1",
   "github_merge_authorized": false,
   "package": {
-    "container": "llave/release/LLAVE-v1.0.0-release-kit.tar.gz",
+    "container": "reconstructed LLAVE-v1.0.0-release-kit.tar.gz",
     "path": "LLAVE-v1-release-kit/packages/evidencia-publica-llave-1.0.0.tgz",
     "sha256": "46e90d811836af758fc977f721c9f147ecdc342547730f8591c6b3965fe98668",
     "size_bytes": 29142
   },
   "production_migration_applied": false,
   "release_kit": {
-    "path": "llave/release/LLAVE-v1.0.0-release-kit.tar.gz",
-    "sha256": "c2c1667cfc3abcc44d1fbe52adbca2c36c69ca09a56e4a91d8f6200abc674d1e",
-    "size_bytes": 74410
+    "ordered_files": [
+      "llave/release/LLAVE-v1.0.0-release-kit.tar.gz.b64.part-00",
+      "llave/release/LLAVE-v1.0.0-release-kit.tar.gz.b64.segment-01-02",
+      "llave/release/LLAVE-v1.0.0-release-kit.tar.gz.b64.part-03",
+      "llave/release/LLAVE-v1.0.0-release-kit.tar.gz.b64.part-04",
+      "llave/release/LLAVE-v1.0.0-release-kit.tar.gz.b64.segment-05-06",
+      "llave/release/LLAVE-v1.0.0-release-kit.tar.gz.b64.segment-07-08",
+      "llave/release/LLAVE-v1.0.0-release-kit.tar.gz.b64.part-09",
+      "llave/release/LLAVE-v1.0.0-release-kit.tar.gz.b64.part-10",
+      "llave/release/LLAVE-v1.0.0-release-kit.tar.gz.b64.part-11",
+      "llave/release/LLAVE-v1.0.0-release-kit.tar.gz.b64.part-12"
+    ],
+    "sha256": "3c9692f57e2a19a09be26c4d460cf70372a1a7d82f98595430f637ffc45f14f6",
+    "size_bytes": 74665,
+    "transport": "explicit ordered base64 segments plus hash-gated reconstruct.sh"
   },
   "source_snapshot_commit": "6f885d03ee0012f91411b06a6870e65ea5a04010",
   "stack_base": "FORJA v1.0.0",

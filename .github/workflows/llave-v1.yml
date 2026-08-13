@@ -19,7 +19,7 @@ jobs:
       - name: Reconstruct exact release kit
         run: |
           bash llave/release/reconstruct.sh /tmp/LLAVE-v1.0.0-release-kit.tar.gz
-          echo 'c2c1667cfc3abcc44d1fbe52adbca2c36c69ca09a56e4a91d8f6200abc674d1e  /tmp/LLAVE-v1.0.0-release-kit.tar.gz' | sha256sum -c -
+          echo '3c9692f57e2a19a09be26c4d460cf70372a1a7d82f98595430f637ffc45f14f6  /tmp/LLAVE-v1.0.0-release-kit.tar.gz' | sha256sum -c -
           mkdir -p /tmp/llave-kit
           tar -xzf /tmp/LLAVE-v1.0.0-release-kit.tar.gz -C /tmp/llave-kit
           cd /tmp/llave-kit/LLAVE-v1-release-kit
