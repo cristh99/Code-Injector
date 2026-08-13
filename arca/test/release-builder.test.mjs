@@ -61,3 +61,25 @@ test('release builder normalizes source file modes across environments', async (
     await chmod(script, scriptMode & 0o777);
   }
 });
+
+test('release builder does not depend on external tar or gzip implementations', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'arca-release-tools-'));
+  const bin = join(dir, 'bin');
+  const { mkdir, chmod } = await import('node:fs/promises');
+  await mkdir(bin);
+  for (const name of ['tar', 'gzip']) {
+    const path = join(bin, name);
+    await writeFile(path, '#!/bin/sh\nexit 99\n');
+    await chmod(path, 0o755);
+  }
+  const pkg = join(dir, 'package.tgz');
+  const canary = join(dir, 'canary.tar.gz');
+  const out = join(dir, 'release.tar.gz');
+  await writeFile(pkg, Buffer.from('package-fixture'));
+  await writeFile(canary, Buffer.from('canary-fixture'));
+  const p = spawnSync('bash', [builder, out, pkg, canary], {
+    encoding: 'utf8',
+    env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+  });
+  assert.equal(p.status, 0, p.stdout + p.stderr);
+});

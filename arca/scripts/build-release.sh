@@ -73,12 +73,9 @@ find "$kit" -type f -exec chmod 0644 {} +
 chmod 0755 \
   "$kit/source/arca/bootstrap/recover.mjs" \
   "$kit/source/arca/scripts/build-release.sh" \
+  "$kit/source/arca/scripts/deterministic-archive.mjs" \
   "$kit/source/arca/src/cli.mjs" \
   "$kit/VERIFY-RELEASE.mjs"
 
-(
-  cd "$work"
-  tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner -cf - ARCA-v1-release-kit \
-    | gzip -n -9 > "$out"
-)
+node "$source_root/scripts/deterministic-archive.mjs" "$kit" "$out"
 sha256sum "$out"
