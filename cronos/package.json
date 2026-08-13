@@ -1,0 +1,27 @@
+{
+  "name": "@evidencia-publica/cronos",
+  "version": "1.0.0",
+  "description": "Snapshot-bound CAS verification for EVIDENCIA_PUBLICA cooperation protocol 2.2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "cronos": "src/cli.mjs"
+  },
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "files": [
+    "src",
+    "sql",
+    "docs",
+    "README.md",
+    "LICENSE",
+    "CRONOS-V1-SCHEMA-MANIFEST.json"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}

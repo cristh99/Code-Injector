@@ -1,0 +1,17 @@
+{
+  "format": "cronos-drift-audit-v1",
+  "measured_at_utc": "2026-08-13T12:21:14.506084Z",
+  "source": "agent_memory.work_events_v2 + verification_requests_v2 + verification_results_v2",
+  "total_submissions": 60,
+  "completed_with_verdict": 45,
+  "still_pending": 15,
+  "requests_with_pre_verdict_drift": 7,
+  "requests_with_post_verdict_drift": 2,
+  "cancelled_before_verdict": 9,
+  "latency_seconds": {
+    "median": 1137.7168745,
+    "p90": 39931.5343537,
+    "max": 56278.763623
+  },
+  "proof_boundary": "Historical diagnostic only; CRONOS prevents future unbound finalization but does not retroactively reinterpret prior verdicts."
+}
