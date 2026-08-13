@@ -27,32 +27,38 @@ sql=(out/'001_forja_v1.sql').read_text()
 function_names=re.findall(r'CREATE OR REPLACE FUNCTION agent_memory\.(forja_[a-z0-9_]+)',sql,re.I)
 table_names=re.findall(r'CREATE TABLE IF NOT EXISTS agent_memory\.(forja_[a-z0-9_]+)',sql,re.I)
 index_names=re.findall(r'CREATE(?: UNIQUE)? INDEX(?: IF NOT EXISTS)?\s+([a-z0-9_]+)',sql,re.I)
-marker_candidates={
-  'legacy_index_name':'forja_sessions_v1_one_active_identity' in sql,
-  'one_active_phrase':'one active' in sql.lower(),
-  'active_writer_function':'forja_assert_active_writer_session_v1' in sql,
-  'scope_fence_function':'forja_acquire_scope_fence_v1' in sql,
-  'motherduck_guard':'UNSAFE_DYNAMIC_SQL_TRANSPORT' in sql,
-  'leaf_yes_guard':'AUTOMATIC_VERIFICATION_LEAF_REQUIRES_YES' in sql,
+required_functions={
+  'forja_assert_active_writer_session_v1',
+  'forja_acquire_scope_fence_v1',
+  'forja_assert_scope_fence_v1',
+  'forja_validate_motherduck_sql_v1',
+  'forja_validate_work_shape_v1',
+  'forja_create_execution_envelope_v1',
+  'forja_seal_inline_text_v1',
 }
-print(json.dumps({
+required_indexes={
+  'forja_schema_versions_v1_one_active',
+  'forja_sessions_v1_one_active_writer',
+  'forja_scope_fences_v1_one_active',
+  'forja_artifact_seals_v1_one_sealed_ref',
+}
+diagnostic={
   'diagnostic':'FORJA_EXACT_PAYLOAD_SURFACE',
   'function_declarations':len(function_names),
   'distinct_function_names':len(set(function_names)),
-  'function_names':function_names,
   'table_declarations':len(table_names),
   'distinct_table_names':len(set(table_names)),
-  'table_names':table_names,
   'index_names':index_names,
-  'marker_candidates':marker_candidates,
-},sort_keys=True))
+  'required_functions_present':sorted(required_functions & set(function_names)),
+  'required_indexes_present':sorted(required_indexes & set(index_names)),
+}
+print(json.dumps(diagnostic,sort_keys=True))
 assert len(function_names) == 22
 assert len(set(function_names)) == 22
 assert len(table_names) == 7
 assert len(set(table_names)) == 7
-assert 'forja_sessions_v1_one_active_identity' in sql
-assert 'UNSAFE_DYNAMIC_SQL_TRANSPORT' in sql
-assert 'AUTOMATIC_VERIFICATION_LEAF_REQUIRES_YES' in sql
+assert required_functions <= set(function_names)
+assert required_indexes <= set(index_names)
 canary=(out/'002_forja_v1_canary.sql').read_text()
 assert canary.rstrip().endswith('ROLLBACK;')
 assert cert['verification']['production_applied'] is False
