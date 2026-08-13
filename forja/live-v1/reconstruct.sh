@@ -38,12 +38,14 @@ required_indexes={
   'forja_scope_fences_v1_one_active','forja_artifact_seals_v1_one_sealed_ref',
 }
 canary=(out/'002_forja_v1_canary.sql').read_text()
+rollback_positions=[m.start() for m in re.finditer(r'(?im)^ROLLBACK;\s*$',canary)]
+readback_position=canary.find('forja_canary_rollback_readback')
 boundary={
-  'canary_ends_rollback':canary.rstrip().endswith('ROLLBACK;'),
-  'canary_tail':canary[-240:],
+  'rollback_count':len(rollback_positions),
+  'rollback_before_readback':bool(rollback_positions) and readback_position>rollback_positions[-1],
+  'rollback_readback_present':readback_position>=0,
   'cert_production_applied':cert.get('verification',{}).get('production_applied'),
   'cert_promotion_authorized':cert.get('verification',{}).get('promotion_authorized'),
-  'cert_live_gates':cert.get('live_neon',{}).get('gates_passed'),
 }
 print(json.dumps({
   'diagnostic':'FORJA_EXACT_PAYLOAD_SURFACE',
@@ -58,8 +60,10 @@ assert len(table_names) == 7
 assert len(set(table_names)) == 7
 assert required_functions <= set(function_names)
 assert required_indexes <= set(index_names)
-assert boundary['canary_ends_rollback']
+assert boundary['rollback_count'] >= 1
+assert boundary['rollback_readback_present']
+assert boundary['rollback_before_readback']
 assert boundary['cert_production_applied'] is False
 assert boundary['cert_promotion_authorized'] is False
-print(json.dumps({'status':'PASS_RECONSTRUCTED_EXACT_PAYLOAD','migration_function_declarations':22,'migration_table_declarations':7,'production_applied':False},sort_keys=True))
+print(json.dumps({'status':'PASS_RECONSTRUCTED_EXACT_PAYLOAD','migration_function_declarations':22,'migration_table_declarations':7,'rollback_readback':True,'production_applied':False},sort_keys=True))
 PY
