@@ -1,0 +1,12 @@
+{
+  "name": "@evidencia-publica/arca",
+  "version": "1.0.0",
+  "description": "Proof-carrying Reed-Solomon artifact transport for EVIDENCIA_PUBLICA",
+  "type": "module",
+  "engines": {"node": ">=22"},
+  "bin": {"arca": "src/cli.mjs"},
+  "exports": "./src/index.mjs",
+  "scripts": {"test": "node --test", "coverage": "node --test --experimental-test-coverage"},
+  "files": ["src", "sql", "examples", "README.md", "LICENSE", "ARCA-V1-SCHEMA-MANIFEST.json", "ARCA-V1-CANARY-RECEIPT.json"],
+  "license": "MIT"
+}

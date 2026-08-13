@@ -1,0 +1,15 @@
+import test from 'node:test'; import assert from 'node:assert/strict';
+import { encodeArtifact, recoverArtifact, inspectShards, validateManifest, merkleRoot } from '../src/transport.mjs';
+const data=Buffer.from('ARCA exact bytes '.repeat(173));
+const encoded=encodeArtifact(data,{artifactId:'test',artifactRef:'memory:test',mediaType:'text/plain',dataShards:6,parityShards:3,transportEpoch:7,sessionFenceSha256:'a'.repeat(64)});
+const map=(drop=[],corrupt=[])=>new Map(encoded.shards.filter(s=>!drop.includes(s.index)).map(s=>{const b=Buffer.from(s.bytes);if(corrupt.includes(s.index))b[0]^=255;return[s.index,b];}));
+test('manifest is self-hashed and Merkle-bound',()=>{assert.equal(validateManifest(encoded.manifest),true);assert.equal(merkleRoot(encoded.manifest.shards),encoded.manifest.merkle_root);});
+test('manifest rejects unknown field',()=>assert.equal(validateManifest({...encoded.manifest,evil:true}),false));
+test('round trip is byte-identical',()=>assert.deepEqual(recoverArtifact(encoded.manifest,map()),data));
+test('any parity-sized erasure set is recoverable',()=>assert.deepEqual(recoverArtifact(encoded.manifest,map([0,4,8])),data));
+test('mixed corruption and erasure within parity is recoverable',()=>assert.deepEqual(recoverArtifact(encoded.manifest,map([1],[7,8])),data));
+test('too many failures fail closed',()=>assert.throws(()=>recoverArtifact(encoded.manifest,map([0,1,2,3]))));
+test('wrong epoch and fence fail closed',()=>{assert.throws(()=>recoverArtifact(encoded.manifest,map(),{expectedEpoch:8}));assert.throws(()=>recoverArtifact(encoded.manifest,map(),{expectedSessionFenceSha256:'b'.repeat(64)}));});
+test('verification distinguishes missing and corrupt shards',()=>{const v=inspectShards(encoded.manifest,map([0],[7]));assert.equal(v.status,'RECOVERABLE');assert.deepEqual(v.missing_indexes,[0]);assert.deepEqual(v.corrupt_indexes,[7]);assert.equal(v.nack_bitmap[0],'1');assert.equal(v.nack_bitmap[7],'1');});
+test('duplicate and reordered Map cannot change recovered bytes',()=>{const entries=[...map()].reverse();const m=new Map([...entries,...entries]);assert.deepEqual(recoverArtifact(encoded.manifest,m),data);});
+test('gzip encoding is deterministic and exact',()=>{const a=encodeArtifact(data,{artifactId:'gz',artifactRef:'m:gz',mediaType:'text/plain',dataShards:5,parityShards:2,compression:'gzip'});const b=encodeArtifact(data,{artifactId:'gz',artifactRef:'m:gz',mediaType:'text/plain',dataShards:5,parityShards:2,compression:'gzip'});assert.equal(a.manifest.encoded_sha256,b.manifest.encoded_sha256);assert.deepEqual(recoverArtifact(a.manifest,new Map(a.shards.map(s=>[s.index,s.bytes]))),data);});
