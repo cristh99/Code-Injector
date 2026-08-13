@@ -1,0 +1,54 @@
+{
+  "artifact": "LLAVE",
+  "checks": {
+    "all_pass": true,
+    "cross_runtime_hash_parity": true,
+    "exact_grant_authorized": true,
+    "fractional_limit_rejected": true,
+    "hc1_grant_rejected": true,
+    "lease_fence_pass": true,
+    "legacy_counts_unchanged": true,
+    "one_assignment_only": true,
+    "revocation_rejected": true,
+    "unknown_field_rejected": true,
+    "unsafe_integer_rejected": true,
+    "wrong_session_rejected": true
+  },
+  "contract_hash_test_vector": {
+    "node_sha256": "72d065cb9bab85897dbc6f19396da1039b30c639cdda4b70277293f86d28c63c",
+    "parity": true,
+    "postgres_sha256": "72d065cb9bab85897dbc6f19396da1039b30c639cdda4b70277293f86d28c63c"
+  },
+  "current_promotion_authorized": false,
+  "drive_mutations": 0,
+  "external_source_calls": 0,
+  "external_spend_usd": 0,
+  "format": "llave-v1-neon-canary-receipt",
+  "human_review_required": false,
+  "motherduck_mutations": 0,
+  "observed_at_utc": "2026-08-12T23:24:00Z",
+  "production_neon_branch": {
+    "branch_id": "br-flat-block-ax5eh8og",
+    "forja_installed": false,
+    "llave_installed": false,
+    "unchanged": true
+  },
+  "proof_boundary": "Temporary-branch authorization control proof only; no production installation or external write capability created.",
+  "query_rw_calls": 0,
+  "schema_manifest_sha256": "9b2173c606fa283b739f108c3d8345f135425ac6856054eb122745089b0287d7",
+  "synthetic_residue": {
+    "authorities": 0,
+    "grants": 0,
+    "leases": 0,
+    "messages": 0,
+    "requirements": 0,
+    "sessions": 0,
+    "work": 0
+  },
+  "temporary_neon_branch": {
+    "branch_id": "br-weathered-lake-axmtvq28",
+    "database": "neondb",
+    "project_id": "proud-union-83275604"
+  },
+  "version": "1.0.0"
+}
