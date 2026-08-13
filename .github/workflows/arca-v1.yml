@@ -1,0 +1,59 @@
+name: ARCA v1 independent recovery
+
+on:
+  push:
+    branches: [arca-artifact-transport-v1]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reconstruct source and tests from exact release kit
+        run: |
+          set -euo pipefail
+          bash arca/release/reconstruct.sh /tmp/ARCA-v1.0.0-release-kit.tar.gz
+          echo '357889256b26cb5618a1f4188eccb4ecac573300a031b75b487a20b064475eb8  /tmp/ARCA-v1.0.0-release-kit.tar.gz' | sha256sum -c -
+          mkdir -p /tmp/arca-kit
+          tar -xzf /tmp/ARCA-v1.0.0-release-kit.tar.gz -C /tmp/arca-kit
+          cd /tmp/arca-kit/ARCA-v1-release-kit
+          sha256sum -c SHA256SUMS
+          node VERIFY-RELEASE.mjs
+      - name: Run reconstructed source suite
+        run: npm test --prefix /tmp/arca-kit/ARCA-v1-release-kit/source/arca
+      - name: Recover exact release from damaged ARCA shards
+        run: |
+          set -euo pipefail
+          node /tmp/arca-kit/ARCA-v1-release-kit/source/arca/src/cli.mjs recover \
+            arca/release/ARCA-V1-SHARD-MANIFEST.json \
+            arca/release/shards \
+            /tmp/ARCA-v1.0.0-recovered.tar.gz \
+            --missing=0,2,7 --corrupt=8
+          cmp /tmp/ARCA-v1.0.0-release-kit.tar.gz /tmp/ARCA-v1.0.0-recovered.tar.gz
+          echo '357889256b26cb5618a1f4188eccb4ecac573300a031b75b487a20b064475eb8  /tmp/ARCA-v1.0.0-recovered.tar.gz' | sha256sum -c -
+      - name: Build package twice byte-identically
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/arca-pack-a /tmp/arca-pack-b
+          (cd /tmp/arca-kit/ARCA-v1-release-kit/source/arca && npm pack --pack-destination /tmp/arca-pack-a)
+          (cd /tmp/arca-kit/ARCA-v1-release-kit/source/arca && npm pack --pack-destination /tmp/arca-pack-b)
+          cmp /tmp/arca-pack-a/evidencia-publica-arca-1.0.0.tgz /tmp/arca-pack-b/evidencia-publica-arca-1.0.0.tgz
+          echo '07827676a1eb726b6cc0c3f372ffa26ba20bab061d667fecbd90367b743855e9  /tmp/arca-pack-a/evidencia-publica-arca-1.0.0.tgz' | sha256sum -c -
+      - name: Cold offline install and corruption denial
+        run: |
+          set -euo pipefail
+          npm install --ignore-scripts --offline --prefix /tmp/arca-install /tmp/arca-pack-a/evidencia-publica-arca-1.0.0.tgz
+          cp /tmp/ARCA-v1.0.0-release-kit.tar.gz /tmp/corrupt.tar.gz
+          printf '\x00' | dd of=/tmp/corrupt.tar.gz bs=1 seek=100 conv=notrunc status=none
+          set +e
+          tar -tzf /tmp/corrupt.tar.gz >/dev/null 2>&1
+          rc=$?
+          set -e
+          test "$rc" -ne 0
