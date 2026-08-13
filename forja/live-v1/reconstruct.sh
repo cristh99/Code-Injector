@@ -26,16 +26,26 @@ out=pathlib.Path(sys.argv[1]); cert=json.loads(pathlib.Path(sys.argv[2]).read_te
 sql=(out/'001_forja_v1.sql').read_text()
 function_names=re.findall(r'CREATE OR REPLACE FUNCTION agent_memory\.(forja_[a-z0-9_]+)',sql,re.I)
 table_names=re.findall(r'CREATE TABLE IF NOT EXISTS agent_memory\.(forja_[a-z0-9_]+)',sql,re.I)
-diagnostic={
-  'diagnostic':'FORJA_DECLARATION_COUNTS',
+index_names=re.findall(r'CREATE(?: UNIQUE)? INDEX(?: IF NOT EXISTS)?\s+([a-z0-9_]+)',sql,re.I)
+marker_candidates={
+  'legacy_index_name':'forja_sessions_v1_one_active_identity' in sql,
+  'one_active_phrase':'one active' in sql.lower(),
+  'active_writer_function':'forja_assert_active_writer_session_v1' in sql,
+  'scope_fence_function':'forja_acquire_scope_fence_v1' in sql,
+  'motherduck_guard':'UNSAFE_DYNAMIC_SQL_TRANSPORT' in sql,
+  'leaf_yes_guard':'AUTOMATIC_VERIFICATION_LEAF_REQUIRES_YES' in sql,
+}
+print(json.dumps({
+  'diagnostic':'FORJA_EXACT_PAYLOAD_SURFACE',
   'function_declarations':len(function_names),
   'distinct_function_names':len(set(function_names)),
   'function_names':function_names,
   'table_declarations':len(table_names),
   'distinct_table_names':len(set(table_names)),
   'table_names':table_names,
-}
-print(json.dumps(diagnostic,sort_keys=True))
+  'index_names':index_names,
+  'marker_candidates':marker_candidates,
+},sort_keys=True))
 assert len(function_names) == 22
 assert len(set(function_names)) == 22
 assert len(table_names) == 7
