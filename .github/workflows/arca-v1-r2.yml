@@ -43,7 +43,7 @@ jobs:
           bash arca/scripts/build-release.sh /tmp/ARCA-v1.0.0-a.tar.gz /tmp/arca-pack-a/evidencia-publica-arca-1.0.0.tgz /tmp/FORJA-v1.0.0-release-kit.tar.gz
           bash arca/scripts/build-release.sh /tmp/ARCA-v1.0.0-b.tar.gz /tmp/arca-pack-a/evidencia-publica-arca-1.0.0.tgz /tmp/FORJA-v1.0.0-release-kit.tar.gz
           cmp /tmp/ARCA-v1.0.0-a.tar.gz /tmp/ARCA-v1.0.0-b.tar.gz
-          echo 'b30850169a111775aabd26f708bf8ae52e2290f1e10f611a7e491a6da60d7a4c  /tmp/ARCA-v1.0.0-a.tar.gz' | sha256sum -c -
+          echo '50b8f5f19f95ac71eab9c04fbf6726864e1000ceb224fae1225c7aa694e7cf4f  /tmp/ARCA-v1.0.0-a.tar.gz' | sha256sum -c -
           mkdir -p /tmp/arca-kit
           tar -xzf /tmp/ARCA-v1.0.0-a.tar.gz -C /tmp/arca-kit
           (cd /tmp/arca-kit/ARCA-v1-release-kit && sha256sum -c SHA256SUMS && node VERIFY-RELEASE.mjs)
@@ -54,7 +54,7 @@ jobs:
           node arca/src/cli.mjs encode /tmp/ARCA-v1.0.0-a.tar.gz /tmp/arca-shards --data=10 --parity=5 --artifact-id=ARCA-v1.0.0-release-kit --artifact-ref=github-actions:ARCA-v1.0.0 --media-type=application/gzip
           node arca/src/cli.mjs recover /tmp/arca-shards/manifest.json /tmp/arca-shards /tmp/ARCA-v1.0.0-recovered.tar.gz --missing=0,2,7 --corrupt=8
           cmp /tmp/ARCA-v1.0.0-a.tar.gz /tmp/ARCA-v1.0.0-recovered.tar.gz
-          echo 'b30850169a111775aabd26f708bf8ae52e2290f1e10f611a7e491a6da60d7a4c  /tmp/ARCA-v1.0.0-recovered.tar.gz' | sha256sum -c -
+          echo '50b8f5f19f95ac71eab9c04fbf6726864e1000ceb224fae1225c7aa694e7cf4f  /tmp/ARCA-v1.0.0-recovered.tar.gz' | sha256sum -c -
 
       - name: Cold offline install recovers independent FORJA artifact
         run: |

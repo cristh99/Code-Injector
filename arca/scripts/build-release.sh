@@ -16,8 +16,17 @@ trap 'rm -rf "$work"' EXIT
 kit="$work/ARCA-v1-release-kit"
 mkdir -p "$kit/source" "$kit/packages" "$kit/canaries" "$kit/verification"
 
-cp -a "$source_root" "$kit/source/arca"
-rm -rf "$kit/source/arca/node_modules" "$kit/source/arca/.git" "$kit/source/arca/release"
+mkdir -p "$kit/source/arca"
+for file in package.json README.md LICENSE ARCA-V1-SCHEMA-MANIFEST.json ARCA-V1-CANARY-RECEIPT.json; do
+  cp "$source_root/$file" "$kit/source/arca/$file"
+done
+for dir in bootstrap docs examples scripts sql src; do
+  cp -a "$source_root/$dir" "$kit/source/arca/$dir"
+done
+mkdir -p "$kit/source/arca/test"
+for test_file in "$source_root"/test/*.test.mjs; do
+  cp "$test_file" "$kit/source/arca/test/"
+done
 cp "$package" "$kit/packages/evidencia-publica-arca-1.0.0.tgz"
 cp "$canary" "$kit/canaries/FORJA-v1.0.0-release-kit.tar.gz"
 
