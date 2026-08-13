@@ -67,6 +67,15 @@ if(manifest.format!=='arca-release-manifest-v1'||manifest.artifact!=='ARCA'||man
 console.log(JSON.stringify({valid:true,artifact:'ARCA',version:'1.0.0',inventory_entries:lines.length,package_sha256:manifest.package.sha256,canary_sha256:manifest.real_canary.sha256,production_applied:false,external_spend_usd:0}));
 NODE
 
+# Normalize modes so release bytes do not depend on checkout umask or filesystem metadata.
+find "$kit" -type d -exec chmod 0755 {} +
+find "$kit" -type f -exec chmod 0644 {} +
+chmod 0755 \
+  "$kit/source/arca/bootstrap/recover.mjs" \
+  "$kit/source/arca/scripts/build-release.sh" \
+  "$kit/source/arca/src/cli.mjs" \
+  "$kit/VERIFY-RELEASE.mjs"
+
 (
   cd "$work"
   tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner -cf - ARCA-v1-release-kit \

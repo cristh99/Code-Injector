@@ -33,3 +33,31 @@ test('release builder ignores ambient untracked and backup files', async () => {
     await rm(backup, { force: true });
   }
 });
+
+test('release builder normalizes source file modes across environments', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'arca-release-modes-'));
+  const pkg = join(dir, 'package.tgz');
+  const canary = join(dir, 'canary.tar.gz');
+  const a = join(dir, 'a.tar.gz');
+  const b = join(dir, 'b.tar.gz');
+  await writeFile(pkg, Buffer.from('package-fixture'));
+  await writeFile(canary, Buffer.from('canary-fixture'));
+  const readme = join(root, 'README.md');
+  const script = join(root, 'scripts', 'build-release.sh');
+  const { chmod, stat } = await import('node:fs/promises');
+  const readmeMode = (await stat(readme)).mode;
+  const scriptMode = (await stat(script)).mode;
+  let p = spawnSync('bash', [builder, a, pkg, canary], { encoding: 'utf8' });
+  assert.equal(p.status, 0, p.stdout + p.stderr);
+  try {
+    await chmod(readme, 0o600);
+    await chmod(script, 0o700);
+    p = spawnSync('bash', [builder, b, pkg, canary], { encoding: 'utf8' });
+    assert.equal(p.status, 0, p.stdout + p.stderr);
+    const digest = async (path) => createHash('sha256').update(await readFile(path)).digest('hex');
+    assert.equal(await digest(b), await digest(a));
+  } finally {
+    await chmod(readme, readmeMode & 0o777);
+    await chmod(script, scriptMode & 0o777);
+  }
+});
