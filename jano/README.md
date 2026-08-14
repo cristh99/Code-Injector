@@ -19,7 +19,7 @@ python reconstruct_release.py
 - Bytes: `21,225`
 - SHA-256: `2f5442434e5913b03b40bac85a1e76d6ff0da44b8770e1a4381e7faad00e6cc7`
 - Manifest externo: `release/jano-v1.0.0-experimental.manifest.json`
-- Manifest SHA-256: `05c0033fb2abb8a9be0f96f7bfdc9e632c094c0b19e650311d00b7480f8b3e34`
+- Manifest SHA-256: `05c0f21c436fa95bd677f54ce56c81d90d24b245e0dea334aed37443b3a3ed35`
 - Canario vivo: `release/jano-live-canary-receipt.json`
 - Pruebas locales y cold-run del tarball exacto: `24/24 PASS`
 - Canario: 11 trabajos activos evaluados; `MATAR=4`, `CAMBIAR=4`, `MOVER=1`, `SIN_CAMBIO=2`; mutaciones `0`.

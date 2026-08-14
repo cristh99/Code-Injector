@@ -24,7 +24,7 @@ jobs:
         run: |
           python reconstruct_release.py
           echo "2f5442434e5913b03b40bac85a1e76d6ff0da44b8770e1a4381e7faad00e6cc7  jano-v1.0.0-experimental.tar.gz" | sha256sum -c -
-          echo "05c0033fb2abb8a9be0f96f7bfdc9e632c094c0b19e650311d00b7480f8b3e34  jano-v1.0.0-experimental.manifest.json" | sha256sum -c -
+          echo "05c0f21c436fa95bd677f54ce56c81d90d24b245e0dea334aed37443b3a3ed35  jano-v1.0.0-experimental.manifest.json" | sha256sum -c -
           echo "002fda9c4d90d98eca5305d3ea6b327f929bd570e58463dbe12af70f06a94189  jano-live-canary-receipt.json" | sha256sum -c -
       - name: Extract exact release
         run: |
