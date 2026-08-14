@@ -1,0 +1,182 @@
+{
+  "artifact": "JANO",
+  "as_of": "2026-08-14T01:46:00Z",
+  "basic_memory": "PROHIBITED",
+  "decisions": [
+    {
+      "action_key": "3b9790f0-ca69-817d-bde4-db76bed444be",
+      "ancestor_recheck_ids": [],
+      "mutation_performed": false,
+      "pending_dependents": 1,
+      "reason_code": "RETARGET_PENDING_DEPENDENTS_BEFORE_KILL",
+      "scope_key": "evidencia-publica/thesis/backend/typed-role-ddl/freeze-study-scope-v1-20260812",
+      "status": "BLOCKED",
+      "successor_chain": [
+        "f4b8bd58-01b4-4a5c-9411-2d54623290ae"
+      ],
+      "target_work_id": "f4b8bd58-01b4-4a5c-9411-2d54623290ae",
+      "verdict": "CAMBIAR",
+      "work_id": "0208b781-b6ea-4603-ad96-193792d6c3a2"
+    },
+    {
+      "action_key": "3b5790f0-ca69-81dd-be97-fb4224ad3270",
+      "ancestor_recheck_ids": [],
+      "mutation_performed": false,
+      "reason_code": "EXPLICIT_SUCCESSOR_CHAIN_VIABLE",
+      "scope_key": "evidencia-publica/institutions/ranks91-103/rank91-entity316-san-lorenzo-v15-20260813",
+      "status": "BLOCKED",
+      "successor_chain": [
+        "cfb8e423-663b-4e7a-bc65-76ddc6967c7e"
+      ],
+      "target_status": "COMPLETED",
+      "target_work_id": "cfb8e423-663b-4e7a-bc65-76ddc6967c7e",
+      "verdict": "MATAR",
+      "work_id": "076167fd-8c66-461c-9245-0e69282a6800"
+    },
+    {
+      "action_key": "3b9790f0-ca69-81ad-8519-cdce8c6942a9",
+      "ancestor_recheck_ids": [],
+      "mutation_performed": false,
+      "reason_code": "EXPLICIT_SUCCESSOR_CHAIN_VIABLE",
+      "scope_key": "evidencia-publica/forensic-finance/f5/v102-private-candidate-rows-one-shot-execution-v2-20260813",
+      "status": "BLOCKED",
+      "successor_chain": [
+        "84db1fe7-0e45-4b10-86c2-8530aaaa7e00"
+      ],
+      "target_status": "READY",
+      "target_work_id": "84db1fe7-0e45-4b10-86c2-8530aaaa7e00",
+      "verdict": "MATAR",
+      "work_id": "6d55dc51-f299-4a10-b2e2-0d707722b7a8"
+    },
+    {
+      "action_key": "3b5790f0-ca69-81dd-be97-fb4224ad3270",
+      "ancestor_recheck_ids": [],
+      "mutation_performed": false,
+      "reason_code": "EXPLICIT_SUCCESSOR_CHAIN_VIABLE",
+      "scope_key": "evidencia-publica/institutions/global-v15-from-v14-ranks78-90-20260812",
+      "status": "BLOCKED",
+      "successor_chain": [
+        "74b751fa-0004-4ea1-a833-0d15f767d1e6",
+        "badc52e8-d1ca-4318-9d28-8ee18f4f14b0"
+      ],
+      "target_status": "COMPLETED",
+      "target_work_id": "badc52e8-d1ca-4318-9d28-8ee18f4f14b0",
+      "verdict": "MATAR",
+      "work_id": "72175f3e-7510-43ca-bbdf-76fbd5d9e440"
+    },
+    {
+      "action_key": "3b9790f0-ca69-817d-bde4-db76bed444be",
+      "ancestor_recheck_ids": [],
+      "mutation_performed": false,
+      "reason_code": "LIVE_ASSIGNMENT_PRESENT",
+      "scope_key": "evidencia-publica/thesis/backend/sedesol/eight-gate-successor-v2-20260814",
+      "status": "VERIFYING",
+      "verdict": "SIN_CAMBIO",
+      "work_id": "72b6e925-29fc-4894-986c-7bb64fb5eb8b"
+    },
+    {
+      "action_key": "3b5790f0-ca69-81dd-be97-fb4224ad3270",
+      "ancestor_recheck_ids": [],
+      "mutation_performed": false,
+      "reason_code": "EXPLICIT_SUCCESSOR_CHAIN_VIABLE",
+      "scope_key": "evidencia-publica/institutions/global-v15-from-v14-ranks78-90-v3-2-20260813",
+      "status": "BLOCKED",
+      "successor_chain": [
+        "badc52e8-d1ca-4318-9d28-8ee18f4f14b0"
+      ],
+      "target_status": "COMPLETED",
+      "target_work_id": "badc52e8-d1ca-4318-9d28-8ee18f4f14b0",
+      "verdict": "MATAR",
+      "work_id": "74b751fa-0004-4ea1-a833-0d15f767d1e6"
+    },
+    {
+      "action_key": "drive-inventory-recovery",
+      "ancestor_recheck_ids": [],
+      "mutation_performed": false,
+      "reason_code": "STALE_UNOWNED_READY_WORK",
+      "scope_key": "drive-organization/google-drive/inventory-checkpoint-recovery-v1-20260812",
+      "stale_hours": 6,
+      "status": "READY",
+      "verdict": "MOVER",
+      "work_id": "76af5601-6b4b-4fa4-9e7a-674fb76c499e"
+    },
+    {
+      "action_key": "3b9790f0-ca69-81ad-8519-cdce8c6942a9",
+      "ancestor_recheck_ids": [],
+      "mutation_performed": false,
+      "pending_dependencies": 1,
+      "reason_code": "PENDING_DEPENDENCIES_PRESENT",
+      "scope_key": "evidencia-publica/forensic-finance/f5/v102-private-candidate-rows-one-shot-execution-v3-20260813",
+      "status": "READY",
+      "verdict": "SIN_CAMBIO",
+      "work_id": "84db1fe7-0e45-4b10-86c2-8530aaaa7e00"
+    },
+    {
+      "action_key": "3b9790f0-ca69-817d-bde4-db76bed444be",
+      "ancestor_recheck_ids": [],
+      "mutation_performed": false,
+      "reason_code": "SUCCESSOR_CHAIN_TERMINAL_NONVIABLE",
+      "scope_key": "evidencia-publica/control-plane/verification/event533-terminal-closeout-v3-2-20260813",
+      "status": "BLOCKED",
+      "successor_chain": [
+        "6bf146d8-63bc-4986-8767-960440d42829"
+      ],
+      "target_status": "CANCELLED",
+      "target_work_id": "6bf146d8-63bc-4986-8767-960440d42829",
+      "verdict": "CAMBIAR",
+      "work_id": "acb40f83-8d45-4ee5-9d0d-bd11808bc45d"
+    },
+    {
+      "action_key": "3b9790f0-ca69-817d-bde4-db76bed444be",
+      "ancestor_recheck_ids": [],
+      "mutation_performed": false,
+      "reason_code": "SUCCESSOR_CHAIN_TERMINAL_NONVIABLE",
+      "scope_key": "evidencia-publica/control-plane/verification/strict-identity-binding-v3-1-independent-qa-20260813",
+      "status": "BLOCKED",
+      "successor_chain": [
+        "a0082459-2ba4-4c2e-a3e9-c6afc04afc8b"
+      ],
+      "target_status": "CANCELLED",
+      "target_work_id": "a0082459-2ba4-4c2e-a3e9-c6afc04afc8b",
+      "verdict": "CAMBIAR",
+      "work_id": "d0fd19ca-122b-4080-81fe-a89b5faaac24"
+    },
+    {
+      "action_key": "3b9790f0-ca69-817d-bde4-db76bed444be",
+      "ancestor_recheck_ids": [],
+      "mutation_performed": false,
+      "reason_code": "BLOCKED_WITHOUT_LIVE_BLOCKER_OR_SUCCESSOR",
+      "scope_key": "evidencia-publica/thesis/backend/typed-role-ddl/freeze-study-scope-v2-20260813",
+      "stale_hours": 6,
+      "status": "BLOCKED",
+      "verdict": "CAMBIAR",
+      "work_id": "f4b8bd58-01b4-4a5c-9411-2d54623290ae"
+    }
+  ],
+  "external_spend_usd": 0,
+  "mode": "READ_ONLY_RECONSIDERATION",
+  "policy_sha256": "a5018927928a3937d471058e90cf8563e0db757e324be246db092b0c759caa72",
+  "production_applied": false,
+  "proof_boundary": "Recommendations over the supplied snapshot only; no work state, claim, assignment, dependency, message, Notion page, repository, or provider is mutated.",
+  "receipt_sha256": "528f080a45d4f22493f8331c65aacb34a16ccc3527299e7cfe7d9481babbaee5",
+  "schema_version": "evidencia-publica.jano.receipt/v1",
+  "snapshot_id": "neon-live-canary-20260814T014600Z",
+  "snapshot_sha256": "786631d5d0065cc816b1e92cf0ffbeeca5a493460db627647f56e0a5f89789d3",
+  "stale_hours": 6,
+  "summary": {
+    "ancestor_recheck_count": 0,
+    "evaluated_active_work_count": 11,
+    "input_work_count": 15,
+    "mutations_performed": 0,
+    "terminal_reference_work_count": 4,
+    "verdict_counts": {
+      "CAMBIAR": 4,
+      "CREAR": 0,
+      "FUSIONAR": 0,
+      "MATAR": 4,
+      "MOVER": 1,
+      "SIN_CAMBIO": 2
+    }
+  },
+  "version": "1.0.0-experimental"
+}
