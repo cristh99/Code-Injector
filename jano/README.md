@@ -8,7 +8,7 @@ Neon ya posee el mutador canónico `agent_memory.record_work_relevance_decisions
 
 ## Evidencia publicada
 
-El release exacto está conservado como chunks Base64 content-addressed. Reconstrucción:
+El release exacto está conservado como ocho chunks Base64 content-addressed. Reconstrucción:
 
 ```bash
 cd jano/release
@@ -16,12 +16,12 @@ python reconstruct_release.py
 ```
 
 - Resultado: `jano-v1.0.0-experimental.tar.gz`
-- Bytes: `20,964`
-- SHA-256: `334c369373b067ac1d810a718b0e1c584e69796b27a0b0ec6478bb50f82e4c4f`
+- Bytes: `21,225`
+- SHA-256: `2f5442434e5913b03b40bac85a1e76d6ff0da44b8770e1a4381e7faad00e6cc7`
 - Manifest externo: `release/jano-v1.0.0-experimental.manifest.json`
-- Manifest SHA-256: `0132ebde1006e99853e9e790b6b87c56a3beb91662c670802130c8c2e5486a2c`
+- Manifest SHA-256: `05c0033fb2abb8a9be0f96f7bfdc9e632c094c0b19e650311d00b7480f8b3e34`
 - Canario vivo: `release/jano-live-canary-receipt.json`
-- Pruebas locales y cold-run del tarball exacto: `23/23 PASS`
+- Pruebas locales y cold-run del tarball exacto: `24/24 PASS`
 - Canario: 11 trabajos activos evaluados; `MATAR=4`, `CAMBIAR=4`, `MOVER=1`, `SIN_CAMBIO=2`; mutaciones `0`.
 
 ## Verificación
@@ -34,7 +34,11 @@ tar -xzf jano-v1.0.0-experimental.tar.gz -C /tmp/jano
 cd /tmp/jano/jano-v1.0.0-experimental
 PYTHONPATH=src python -m unittest discover -s tests -v
 python -m compileall -q src scripts tests
+python scripts/build_release.py --root . --out-dir /tmp/rebuild
+cmp /tmp/rebuild/jano-v1.0.0-experimental.tar.gz ../../../../jano/release/jano-v1.0.0-experimental.tar.gz
 ```
+
+La última prueba demuestra que una reconstrucción desde el propio release vuelve a producir exactamente el mismo tar y contiene un solo `MANIFEST.json`.
 
 ## Frontera de seguridad
 
