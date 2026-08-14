@@ -19,11 +19,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Verify committed release hash
+      - name: Reconstruct and verify committed release
+        working-directory: jano/release
         run: |
-          echo "9afc412f9c02162a57a09721bb6c35cb1d5746c4659aa6192f88aaae91cc98b6  jano/release/jano-v1.0.0-experimental.tar.gz" | sha256sum -c -
-          echo "39d727a579976b59608efd8f8ce7ab8b729e6bb3dcd25d6146b2964d990afbd1  jano/release/jano-v1.0.0-experimental.manifest.json" | sha256sum -c -
-          echo "002fda9c4d90d98eca5305d3ea6b327f929bd570e58463dbe12af70f06a94189  jano/release/jano-live-canary-receipt.json" | sha256sum -c -
+          python reconstruct_release.py
+          echo "334c369373b067ac1d810a718b0e1c584e69796b27a0b0ec6478bb50f82e4c4f  jano-v1.0.0-experimental.tar.gz" | sha256sum -c -
+          echo "0132ebde1006e99853e9e790b6b87c56a3beb91662c670802130c8c2e5486a2c  jano-v1.0.0-experimental.manifest.json" | sha256sum -c -
+          echo "002fda9c4d90d98eca5305d3ea6b327f929bd570e58463dbe12af70f06a94189  jano-live-canary-receipt.json" | sha256sum -c -
       - name: Extract exact release
         run: |
           mkdir -p /tmp/jano
@@ -50,6 +52,11 @@ jobs:
           assert receipt["summary"]["mutations_performed"] == 0
           assert all(not decision["mutation_performed"] for decision in receipt["decisions"])
           PY
+      - name: Check canonical planner boundary
+        working-directory: /tmp/jano/jano-v1.0.0-experimental
+        run: |
+          grep -R "record_work_relevance_decisions_v2" README.md docs/MANUAL.md docs/SKILL.md
+          grep -R "no es una traducción automática" README.md docs/MANUAL.md docs/SKILL.md
       - name: Prove reproducible build
         working-directory: /tmp/jano/jano-v1.0.0-experimental
         run: |
