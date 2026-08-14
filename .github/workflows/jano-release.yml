@@ -1,0 +1,59 @@
+name: JANO release gate
+
+on:
+  push:
+    branches: [jano-reconsideration-v1]
+    paths:
+      - "jano/**"
+      - ".github/workflows/jano-release.yml"
+  pull_request:
+    paths:
+      - "jano/**"
+      - ".github/workflows/jano-release.yml"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify committed release hash
+        run: |
+          echo "9afc412f9c02162a57a09721bb6c35cb1d5746c4659aa6192f88aaae91cc98b6  jano/release/jano-v1.0.0-experimental.tar.gz" | sha256sum -c -
+          echo "39d727a579976b59608efd8f8ce7ab8b729e6bb3dcd25d6146b2964d990afbd1  jano/release/jano-v1.0.0-experimental.manifest.json" | sha256sum -c -
+          echo "002fda9c4d90d98eca5305d3ea6b327f929bd570e58463dbe12af70f06a94189  jano/release/jano-live-canary-receipt.json" | sha256sum -c -
+      - name: Extract exact release
+        run: |
+          mkdir -p /tmp/jano
+          tar -xzf jano/release/jano-v1.0.0-experimental.tar.gz -C /tmp/jano
+      - name: Compile and test
+        working-directory: /tmp/jano/jano-v1.0.0-experimental
+        run: |
+          python -m compileall -q src scripts tests
+          PYTHONPATH=src python -m unittest discover -s tests -v
+      - name: Run live canary fixture
+        working-directory: /tmp/jano/jano-v1.0.0-experimental
+        run: |
+          PYTHONPATH=src python -m jano.cli audit \
+            --snapshot tests/fixtures/live_canary.json \
+            --as-of 2026-08-14T01:46:00Z \
+            --stale-hours 6 \
+            --output /tmp/jano-receipt.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          receipt = json.loads(Path('/tmp/jano-receipt.json').read_text())
+          expected = {"MATAR":4,"CAMBIAR":4,"MOVER":1,"FUSIONAR":0,"CREAR":0,"SIN_CAMBIO":2}
+          assert receipt["summary"]["verdict_counts"] == expected
+          assert receipt["summary"]["mutations_performed"] == 0
+          assert all(not decision["mutation_performed"] for decision in receipt["decisions"])
+          PY
+      - name: Prove reproducible build
+        working-directory: /tmp/jano/jano-v1.0.0-experimental
+        run: |
+          python scripts/build_release.py --root . --out-dir /tmp/build-a
+          python scripts/build_release.py --root . --out-dir /tmp/build-b
+          cmp /tmp/build-a/jano-v1.0.0-experimental.tar.gz /tmp/build-b/jano-v1.0.0-experimental.tar.gz
+          cmp /tmp/build-a/jano-v1.0.0-experimental.manifest.json /tmp/build-b/jano-v1.0.0-experimental.manifest.json
