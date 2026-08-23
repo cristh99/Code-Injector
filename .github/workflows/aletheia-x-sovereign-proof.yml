@@ -1,34 +1,44 @@
-name: ALETHEIA X Sovereign Proof
+name: ALETHEIA X Sovereign Acquisition and PDF OCR Gate
 
 on:
   workflow_dispatch:
   push:
+    branches:
+      - aletheia-x
+      - aletheia-x-ocr-only-hardening-20260823
+    paths:
+      - 'releases/chunks/ALETHEIA-X-v0.3.1-sovereign-proof.mjs.gz.b64.part-*'
+      - 'releases/ALETHEIA-X-v0.3.1-PDF-EVIDENCE-STATUS.md'
+      - '.github/workflows/aletheia-x-sovereign-proof.yml'
+  pull_request:
     branches: [aletheia-x]
     paths:
       - 'releases/chunks/ALETHEIA-X-v0.3.1-sovereign-proof.mjs.gz.b64.part-*'
+      - 'releases/ALETHEIA-X-v0.3.1-PDF-EVIDENCE-STATUS.md'
       - '.github/workflows/aletheia-x-sovereign-proof.yml'
 
 permissions:
   contents: read
 
 jobs:
-  sovereign-proof:
+  sovereign-acquisition-and-pdf-gate:
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Ensure local PDF parser
+      # The reconstructed v0.3.1 executable still calls pdftotext. It is kept
+      # only so the legacy acquisition canary can run. Its PDF text output is
+      # explicitly non-authoritative and is rejected by the OCR gate below.
+      - name: Install legacy compatibility parser — not PDF evidence authority
         shell: bash
         run: |
           set -euo pipefail
-          if ! command -v pdftotext >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y --no-install-recommends poppler-utils
-          fi
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends poppler-utils
           pdftotext -v 2>&1 | head -1
 
       - name: Reconstruct content-addressed ALETHEIA executable
@@ -51,7 +61,7 @@ jobs:
           echo "root=$root" >> "$GITHUB_OUTPUT"
           echo "script=$root/aletheia-sovereign-proof.mjs" >> "$GITHUB_OUTPUT"
 
-      - name: Execute real sovereign web canary
+      - name: Execute sovereign acquisition compatibility canary
         shell: bash
         env:
           CHROME_PATH: /usr/bin/google-chrome
@@ -60,32 +70,75 @@ jobs:
           root="${{ steps.source.outputs.root }}"
           env -u FIRECRAWL_API_KEY -u TAVILY_API_KEY -u EXA_API_KEY -u PARALLEL_API_KEY -u TINYFISH_API_KEY \
             node "${{ steps.source.outputs.script }}" "$root/artifacts" | tee "$root/stdout.json"
-          node - "$root/artifacts/sovereign-proof-report.json" <<'NODE'
+          node - "$root/artifacts/sovereign-proof-report.json" "$root/artifacts/acquisition-only-status.json" <<'NODE'
           const fs = require('node:fs');
           const report = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
-          const expected = [
+          const expectedAcquisition = [
             'zero_paid_credentials', 'zero_external_provider_calls', 'keyless_search_operational',
             'native_http_transport_operational', 'direct_cdp_operational', 'iaip_targets_handled_fail_closed',
             'official_detail_recovered', 'official_download_link_discovered', 'official_pdf_magic',
-            'official_pdf_text_markers', 'evidence_hashed',
+            'evidence_hashed',
           ];
-          if (!report.success || expected.some((key) => report.gates[key] !== true)) process.exit(1);
-          if (report.external_provider_calls.length !== 0) process.exit(1);
-          if (report.provider_names.some((name) => !name.startsWith('sovereign-'))) process.exit(1);
-          console.log(JSON.stringify({
-            success: report.success,
-            gates: report.gates,
-            providers: report.provider_names,
-            official_pdf_sha256: report.official_sedesol.pdf.sha256,
+          const acquisitionPass = report.success
+            && expectedAcquisition.every((key) => report.gates[key] === true)
+            && report.external_provider_calls.length === 0
+            && report.provider_names.every((name) => name.startsWith('sovereign-'));
+          const status = {
+            schema: 'aletheia-x/acquisition-only-status/v1',
+            acquisition_pass: acquisitionPass,
+            pdf_semantic_authority: false,
+            native_pdf_text_marker_observed: report.gates.official_pdf_text_markers === true,
+            classification: 'ACQUISITION_COMPATIBILITY_ONLY__PDF_EVIDENCE_BLOCKED',
+            official_pdf_sha256: report.official_sedesol?.pdf?.sha256 ?? null,
             report_sha256: report.report_sha256,
-          }, null, 2));
+          };
+          fs.writeFileSync(process.argv[3], JSON.stringify(status, null, 2) + '\n');
+          console.log(JSON.stringify(status, null, 2));
+          if (!acquisitionPass) process.exit(1);
           NODE
 
-      - name: Upload sovereign evidence and exact executable
+      - name: Enforce render plus full-page OCR before PDF evidence PASS
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="${{ steps.source.outputs.root }}"
+          node - "$root/artifacts/sovereign-proof-report.json" "$root/artifacts/pdf-evidence-status.json" <<'NODE'
+          const fs = require('node:fs');
+          const report = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          const pdf = report.official_sedesol?.pdf ?? {};
+          const pageCount = Number(pdf.page_count ?? 0);
+          const ocrPages = Number(pdf.ocr_pages ?? 0);
+          const anchors = Array.isArray(pdf.page_anchors) ? pdf.page_anchors : [];
+          const pass = pdf.ocr_used === true
+            && pageCount > 0
+            && ocrPages === pageCount
+            && pdf.native_pdf_text_ignored === true
+            && pdf.provenance === 'PAGE_RENDER_OCR'
+            && anchors.length >= pageCount;
+          const status = {
+            schema: 'aletheia-x/pdf-evidence-status/v1',
+            verdict: pass ? 'PASS_OCR_ONLY' : 'BLOCKED_OCR_ONLY_SUCCESSOR_REQUIRED',
+            page_count: pageCount,
+            ocr_pages: ocrPages,
+            ocr_used: pdf.ocr_used === true,
+            native_pdf_text_ignored: pdf.native_pdf_text_ignored === true,
+            provenance: pdf.provenance ?? null,
+            page_anchor_count: anchors.length,
+            forbidden_legacy_gate_present: report.gates.official_pdf_text_markers === true,
+            claim_ceiling: pass
+              ? 'PDF semantic evidence may use page-render OCR anchors only.'
+              : 'Search/fetch/browser/acquisition only; no PDF semantic presence or absence claim.',
+          };
+          fs.writeFileSync(process.argv[3], JSON.stringify(status, null, 2) + '\n');
+          console.log(JSON.stringify(status, null, 2));
+          if (!pass) process.exit(1);
+          NODE
+
+      - name: Upload acquisition evidence, PDF gate status, and exact executable
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: aletheia-x-sovereign-proof-${{ github.run_id }}
+          name: aletheia-x-sovereign-acquisition-ocr-gate-${{ github.run_id }}
           path: |
             ${{ steps.source.outputs.root }}/aletheia-sovereign-proof.mjs
             ${{ steps.source.outputs.root }}/aletheia-sovereign-proof.mjs.gz
